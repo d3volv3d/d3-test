@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+
+	<link rel='stylesheet' id='mtm-css'  href='http://beta.pressherald.com/wp-content/themes/mainetoday/assets/css/mainetoday.min.css?ver=0.1.0' type='text/css' media='all' />
+
+	<link href='http://fonts.googleapis.com/css?family=Lusitana:400,700' rel='stylesheet' type='text/css' />
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,800,600,300' rel='stylesheet' type='text/css' />
+
+	<script type='text/javascript' src='http://beta.pressherald.com/wp-includes/js/jquery/jquery.js?ver=1.11.0'></script>
+	<script type='text/javascript' src='http://beta.pressherald.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.2.1'></script>
+
+
+
+</head>
+<body>
+
+<div class="mtm-wrapper">
+<div class="main-content-wrap">
+
+<!-- FROM HERE //-->
+
+
+
+<h1 class='svgH1'>Map to show lat/long points with different characteristics; search by town & name</h1>
+<div id='mapBox'>
+<div id='svgBox'>
+	<div id='svgLeft'>
+		<div id='svgNav'>
+			<div id='svgButtons'></div>
+			<div class='clearBoth'></div>
+			<h3>Search</h3>
+			<div id='mapSearch'>
+				<div class="ui-widget"><input id="tags" value='find a location' /></div>
+			</div>
+			<div id='svgClick'></div>
+			<div class='clearBoth'></div>
+		</div>
+		<div id='mapWrap'>
+			<div id='svgMap'></div>
+			<div id='d3ZoomBox'>
+				<div id='d3ZoomPlus'></div>
+				<div id='d3ZoomMid'></div>
+				<div id='d3ZoomMinus'></div>
+			</div>
+			<div class='clearBoth'></div>
+		</div>
+		<div class='clearBoth'></div>
+	</div>
+	<div id='svgChat'>
+		<div id='svgChatBloc'>
+			<p>This version of the Maine map is used to locate points with different characteristics by Latitude and Longitude; it also allow search of an associated location and name. This does not change points over time –– i.e., if you want point A to be size M in year Y and size N in year Z, you'd either need two points or to use a different map.</p>
+		</div>
+	</div>
+</div>
+<div class='clearBoth'></div>
+<div id='iaAnno'></div>
+</div>
+
+
+
+
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="http://specialprojects.pressherald.com/assets/jquery.qtip.min.js"></script>
+
+<!--<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">//-->
+
+<link rel="stylesheet" href="http://dev.mainetodaymedia.com/devMap/assets/jqueryui-mod.css">
+<script src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+<link rel="stylesheet" href="http://specialprojects.pressherald.com/assets/jquery.qtip.min.css" media="all" type="text/css">
+
+
+<style>
+
+/* ### GLOBAL ### */
+.clearBoth { clear: both; }
+
+
+/* ### CONTAINERS ### */
+svg { float: right; }
+#svgBox { position: relative; height: auto; font-family: 'Open Sans', sans-serif; border-top: solid 1px rgb(204,204,204); border-bottom: solid 1px rgb(204,204,204); }
+
+#svgLeft { width: 650px; display: table-cell; vertical-align: top; position: relative; }
+#svgChat { width: 346px; border-left: solid 1px rgb(204,204,204); padding: 10px 0; height: 580px; display: table-cell; vertical-align: top; }
+#svgNav { width: 198px; float: left; padding: 15px 0; }
+
+#svgMap { width: 420px; height: 600px; float: right; padding-left: 10px; }
+#svgChatBloc { padding: 10px 0 0 20px; }
+
+
+/* ### TOOLTIPS ### */
+.qtip-content, .qtip-title {  font-family: 'Open Sans'; font-weight: 300; }
+.qtip-title { font-weight: 600; font-size: 15px; line-height: 16px; padding: 3px 0; text-transform: uppercase; }
+
+
+/* ### MAP OUTLINES ### */
+.svgTown { stroke: rgb(250,250,250); stroke-width: .5; }
+.svgTownActive { cursor: pointer; }
+.svgTownActive:hover { opacity: .5; }
+.counties { fill: transparent; pointer-events: none; stroke-width: 1; stroke: rgb(230,230,230); }
+.state { stroke: rgb(190,190,190); fill: transparent; pointer-events: none; }
+
+/* ### MAP KEY ### */
+.svgKey { font-family: 'Open Sans', sans-serif; font-weight: 600; font-size: 14px; text-transform: uppercase; }
+.keyChit { stroke: rgb(200,200,200); stroke-width: .5; }
+
+
+/* ### PINS ### */
+.GMU { fill: #a6cee3; background-color: #a6cee3; }
+.BOT { fill: #b2df8a; background-color: #b2df8a; }
+.CMU { fill: #6a3d9a; background-color: #6a3d9a; }
+.ART { fill: #1f78b4; background-color: #1f78b4; }
+.HSC { fill: #33a02c; background-color: #33a02c; }
+.POL { fill: #e31a1c; background-color: #e31a1c; }
+.NAT { fill: #fdbf6f; background-color: #fdbf6f; }
+.SCI { fill: #ff7f00; background-color: #ff7f00; }
+.ZAW { fill: #cab2d6; background-color: #cab2d6; }
+.pin { cursor: pointer; stroke-width: .5; stroke: white; opacity: .7; }
+.pinCushion { width: 10px; height: 10px; display: inline-block; border-radius: 5px; margin-right: 5px; float: left; margin-bottom: 10px; margin-top: 3px; opacity: .3; }
+
+/* ### BUTTONS ### */
+.svgButton { text-transform: uppercase; width: 180px; padding: 8px; background-color: white; cursor: pointer; border: solid 1px rgb(225,225,225); margin-top: -1px; color: rgb(100,100,100); font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+.buttonOn, .svgButton:hover { 
+	/*
+	background-color: rgb(198,40,40); 
+	border: solid 1px rgb(198,40,40);
+	*/ 
+	background-color: rgba(70,70,70,.1); 
+	border: solid 1px rgba(70,70,70,.1); 
+	color: rgb(0,0,0); 
+    -webkit-transition: background 0.5s linear;
+    -moz-transition: background 0.5s linear;
+    -ms-transition: background 0.5s linear;
+    -o-transition: background 0.5s linear;
+    transition: background 0.5s linear;
+}
+
+.buttonOn > .pinCushion { opacity: 1 }
+.svgButton:last-child { margin-bottom: 20px; }
+
+
+/* ### TEXT ### */
+.svgH1 { font-family: 'Lusitana', sans-serif; margin-top: 0; margin-bottom: 15px; font-size: 48px; font-weight: 700; letter-spacing: -1px; line-height: 52px; }
+.bcBold { font-weight: 700; }
+#iaAnno { text-align: right; font-family: 'Open Sans', sans-serif; font-weight: 300; font-size: 13px; padding: 7px 0 15px 0; letter-spacing: -.5px; }
+#mapTitle { background-color: rgb(249,249,249); padding: 4px 0 6px 10px; border-top: solid 1px rgb(204,204,204); position: relative; }
+#mapTitleText { font-size: 24px; padding-top: 7px; float: left; font-family: 'Open Sans', sans-serif; letter-spacing: -1px; font-weight: 700; line-height: 24px; }
+
+#svgNav h3 { margin: 0 0 0 0!important; padding: 0 0 6px 0; font-size: 13px; line-height: 13px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; color: rgb(70,70,70); }
+
+#svgChatBloc p { font-family: 'Lusitana',serif; color: #505050; font-size: 18px; line-height: 24px; margin: 0px; padding: 0 0 20px 0; letter-spacing: -0.3px; }
+
+
+/* ### TOWN INFO ### */
+#svgClick h2 { font-family: 'Open Sans', sans-serif; font-weight: 600; color: rgb(70,70,70); font-size: 18px; line-height: 19px; text-transform: uppercase; letter-spacing: 1px; border-bottom: solid 1px rgb(235,235,235); margin: 0 0 5px 0; padding: 5px 0 7px 0; }
+#svgClick { padding-top: 10px; font-weight: 300; }
+#svgClickText { padding-right: 10px; }
+#svgClickText span { font-weight: 700; }
+h3.downMap { padding-top: 15px !important; }
+
+/* ### SEARCH ### */
+#mapSearch { margin: 0; width: auto; height: 26px; padding: 6px 0; border: solid 1px rgb(225,225,225); background: url(http://dev.mainetodaymedia.com/towntrac/V2/imgTrac/tracSearch.png) 172px 12px no-repeat rgb(255,255,255); }
+#mapSearch input { font-family: 'Open Sans', sans-serif; font-weight: 300; color: rgb(150,150,150); border: none; height: 15px; font-size: 12px; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; padding-left: 10px; width: 155px; outline: none; }
+.ui-menu-item { font-family: 'Open Sans', sans-serif; font-weight: 300; }
+.ui-corner-all { border-radius: 0 !important; }
+.ui-menu-item { text-transform: uppercase; font-size: 13px;  }
+.ui-widget-content a { color: rgb(70,70,70); }
+a.ui-corner-all:hover, .ui-menu-item a:hover { background-color: rgb(198,40,40); color: rgb(255,255,255); }
+.ui-autocomplete { background-color: rgb(255,255,255); }
+#mapTowns { font-size: 12px; line-height: 15px; }
+
+
+/* ### SEARCH & TOOLTIP TABLES ### */
+table.tipster, table.clickster { width: 100%; border-collapse: collapse; padding: 0; border: none !important; margin-bottom: 0px !important;}
+td.tipLeft, td.clickLeft { font-size: 14px; font-weight: 300; text-align: left; padding-right: 10px; padding-bottom: 1px; vertical-align: top; }
+td.tipRight, td.clickRight { font-size: 14px; font-weight: 700; padding-bottom: 1px; vertical-align: top; text-align: right; }
+
+/* ### COMPASS ### */
+#d3ZoomBox { width: 29px; height: 55px; position: absolute; right: 370px; top: 20px; border-radius: 2px; box-shadow: 0 0 2px rgba(0,0,0,.3); z-index: 5; }
+#d3ZoomPlus { width: 29px; height: 26px; background: url(http://dev.mainetodaymedia.com/devMap/img/d3Plus.png) left top no-repeat; }
+#d3ZoomMinus { width: 29px; height: 26px; background: url(http://dev.mainetodaymedia.com/devMap/img/d3Minus.png) left top no-repeat; }
+#d3ZoomMid { width: 29px; height: 3px; background: url(http://dev.mainetodaymedia.com/devMap/img/d3Mid.png) left top no-repeat; }
+#d3ZoomPlus:hover { background-position: right top; cursor: pointer; }
+#d3ZoomMinus:hover { background-position: right top; cursor: pointer; }
+
+
+
+/* ######## TABLET PORTRAIT ######## */
+
+@media screen and (min-width : 768px) and (max-width : 997px) {
+
+	#mapBox { width: 748px; }
+	#svgMap { width: 340px; }
+	svg { width: 340px; height: 500px; }
+	#svgChat { width: 180px; font-size: 13px; }
+	#d3ZoomBox { right: 310px; }
+}
+
+/* ######## MOBILE ONLY ######## */
+
+@media screen and (min-width: 320px) and (max-width: 767px) {
+
+	#mapBox { width: auto; float: none; height: auto; }
+	#svgBox { width: auto; float: none; height: auto; }
+	#svgKey { width: auto; border-right: none; height: auto; }
+	#svgMap { float: none; height: auto; padding: 0; width: 300px; position: relative; margin: 0 auto;  }
+	#svgLeft { width: auto; }
+	#svgNav { width: 100%; float: none; }
+	svg { width: 300px; height: 420px; position: relative; margin: 0 auto; }
+	#svgChat { width: auto; float: none; height: auto; border: none; }
+	#svgChatBloc { padding: 0; }
+	#mapSearch input { width: 85%; }
+	.svgButton { width: 50% !important; float: left; box-sizing: border-box; font-size: 10px; padding: 4px 7px 7px 7px; line-height: 16px; height: 27px; overflow: hidden; }
+	#mapSearch { background-position: 273px 12px; width: auto; }
+	
+	#svgLeft, #svgChat { display: block; }
+	#d3ZoomBox { right: auto; left: 20px; }
+	#mapWrap { position: relative; }
+
+}
+
+
+</style>
+
+<script>
+
+var credit = 'Some Guy';
+var source = 'Some Agency';
+var current = 'POL';
+pinRad = 3;
+
+
+xx = jQuery;
+
+xx(document).ready(function() {
+
+(source) ? xx('#iaAnno').append("<div><span class='bcBold'>SOURCE:</span> <span id='iaSource'>" + source + 
+"</span></div>") : '';
+(credit) ? xx('#iaAnno').append("<div><span class='bcBold'>INTERACTIVE:</span> <span id='iaSource'>" + credit + 
+"</span></div>") : '';
+
+
+var dataJSON = [{"Name":"Abbot Town Hall ","ADDRESS":"133 Main Road","City":"Abbot","DISCIPL":"POL","LAT":45.156932,"LON":-69.391269},
+{"Name":"Acton Town Hall ","ADDRESS":"35 H Road","City":"Acton","DISCIPL":"POL","LAT":43.532421,"LON":-70.909618},
+{"Name":"Addison Town Hall ","ADDRESS":"334 Water Street","City":"Addison","DISCIPL":"POL","LAT":44.622934,"LON":-67.742258},
+{"Name":"Albany Twp. Town House","ADDRESS":"1581 Hunts Corner Road","City":"Albany Twp","DISCIPL":"POL","LAT":44.332566,"LON":-70.845625},
+{"Name":"Besse Building ","ADDRESS":"22 Main Street","City":"Albion","DISCIPL":"POL","LAT":44.532681,"LON":-69.439886},
+{"Name":"Alexander Municipal Building ","ADDRESS":"50 Cooper Road","City":"Alexander","DISCIPL":"POL","LAT":45.088443,"LON":-67.469387},
+{"Name":"Conant Chapel ","ADDRESS":"8 Kennebunk Road","City":"Alfred","DISCIPL":"POL","LAT":43.476173,"LON":-70.715399},
+{"Name":"Allagash Community Center","ADDRESS":"1063 Allagash Road","City":"Allagash","DISCIPL":"POL","LAT":47.090574,"LON":-68.997824},
+{"Name":"Alna Fire Station","ADDRESS":"1579 Alna Road","City":"Alna","DISCIPL":"POL","LAT":44.080093,"LON":-69.617809},
+{"Name":"Alton Municipal Building ","ADDRESS":"3352 Bennoch Road","City":"Alton","DISCIPL":"POL","LAT":45.023242,"LON":-68.725778},
+{"Name":"Amherst Town Hall ","ADDRESS":"572 Airline Road","City":"Amherst","DISCIPL":"POL","LAT":44.831831,"LON":-68.36638},
+{"Name":"Amity Town Office ","ADDRESS":"1143 US Route 1","City":"Amity","DISCIPL":"POL","LAT":45.919306,"LON":-67.832871},
+{"Name":"Andover Town Hall ","ADDRESS":"24 Elm Street","City":"Andover","DISCIPL":"POL","LAT":44.636429,"LON":-70.746309},
+{"Name":"Anson Town Hall ","ADDRESS":"62 Main Street","City":"Anson","DISCIPL":"POL","LAT":44.798114,"LON":-69.884274},
+{"Name":"Appleton Town Hall ","ADDRESS":"2915 Sennebec Road","City":"Appleton","DISCIPL":"POL","LAT":44.287904,"LON":-69.247976},
+{"Name":"Arrowsic Town Hall ","ADDRESS":"340 Arrowsic Road","City":"Arrowsic","DISCIPL":"POL","LAT":43.88761,"LON":-69.788469},
+{"Name":"Arundel Fire Station ","ADDRESS":"468 Limerick Road","City":"Arundel","DISCIPL":"POL","LAT":43.437257,"LON":-70.533146},
+{"Name":"Ashland Municipal Building","ADDRESS":"17 Bridgham Street","City":"Ashland","DISCIPL":"POL","LAT":46.631111,"LON":-68.406111},
+{"Name":"Somerset Academy Building","ADDRESS":"26 Academy Street","City":"Athens","DISCIPL":"POL","LAT":44.926752,"LON":-69.670626},
+{"Name":"Atkinson Town Hall ","ADDRESS":"102 No. Stagecoach Road","City":"Atkinson","DISCIPL":"POL","LAT":45.196334,"LON":-69.085469},
+{"Name":"Washburn School ","ADDRESS":"35 Lake Auburn Avenue","City":"Auburn","DISCIPL":"POL","LAT":44.107213,"LON":-70.228706},
+{"Name":"Auburn Middle School ","ADDRESS":"38 Falcon Drive","City":"Auburn","DISCIPL":"POL","LAT":44.09263,"LON":-70.250497},
+{"Name":"Auburn Hall ","ADDRESS":"60 Court Street","City":"Auburn","DISCIPL":"POL","LAT":44.096863,"LON":-70.225715},
+{"Name":"Fairview School ","ADDRESS":"397 Minot Avenue","City":"Auburn","DISCIPL":"POL","LAT":44.084101,"LON":-70.243506},
+{"Name":"Sherwood Heights School ","ADDRESS":"32 Sherwood Drive","City":"Auburn","DISCIPL":"POL","LAT":44.076281,"LON":-70.23089},
+{"Name":"Augusta Armory","ADDRESS":"179 Western Avenue","City":"Augusta","DISCIPL":"POL","LAT":44.313995,"LON":-69.796174},
+{"Name":"Augusta City Center","ADDRESS":"16 Cony Street","City":"Augusta","DISCIPL":"POL","LAT":44.31661,"LON":-69.771121},
+{"Name":"Cony High School","ADDRESS":"60 Pierce Drive","City":"Augusta","DISCIPL":"POL","LAT":44.314734,"LON":-69.748654},
+{"Name":"Aurora Town Hall ","ADDRESS":"Old Route 9","City":"Aurora","DISCIPL":"POL","LAT":44.838441,"LON":-68.189815},
+{"Name":"Avon Municipal Building ","ADDRESS":"1116 Rangeley Road","City":"Avon","DISCIPL":"POL","LAT":44.813841,"LON":-70.342195},
+{"Name":"F. Doug Jones Memorial Municipal Building ","ADDRESS":"63 Broadway Street","City":"Baileyville","DISCIPL":"POL","LAT":42.196934,"LON":-89.596069},
+{"Name":"Baldwin Consolidated School ","ADDRESS":"536 Pequawket Trail","City":"West Baldwin","DISCIPL":"POL","LAT":43.781449,"LON":-70.641288},
+{"Name":"Bancroft Town Office ","ADDRESS":"18 Schoolhouse Road","City":"Bancroft","DISCIPL":"POL","LAT":45.673672,"LON":-68.030849},
+{"Name":"Cross Insurance Center","ADDRESS":"515 Main Street","City":"Bangor","DISCIPL":"POL","LAT":44.788802,"LON":-68.779289},
+{"Name":"Municipal Building Auditorium ","ADDRESS":"93 Cottage Street","City":"Bar Harbor","DISCIPL":"POL","LAT":44.389162,"LON":-68.210776},
+{"Name":"Baring Baptist Church ","ADDRESS":"47 Front Street","City":"Baring Plt","DISCIPL":"POL","LAT":45.1347,"LON":-67.314726},
+{"Name":"Bath Middle School ","ADDRESS":"6 Old Brunswick Road","City":"Bath","DISCIPL":"POL","LAT":43.918462,"LON":-69.827027},
+{"Name":"Beals Town Office ","ADDRESS":"11 Big Pond Road","City":"Beals","DISCIPL":"POL","LAT":44.519424,"LON":-67.613246},
+{"Name":"Beaver Cove Town Office","ADDRESS":"795 Lily Bay Road","City":"Beaver Cove","DISCIPL":"POL","LAT":45.555171,"LON":-69.536146},
+{"Name":"Beddington Community Building ","ADDRESS":"1982 State Highway 193","City":"Beddington","DISCIPL":"POL","LAT":44.797944,"LON":-68.0412},
+{"Name":"Belfast Boathouse ","ADDRESS":"34 Commercial Street","City":"Belfast","DISCIPL":"POL","LAT":44.42539,"LON":-69.001304},
+{"Name":"Belfast Boathouse ","ADDRESS":"34 Commercial Street","City":"Belfast","DISCIPL":"POL","LAT":44.42539,"LON":-69.001304},
+{"Name":"Belfast Boathouse ","ADDRESS":"34 Commercial Street","City":"Belfast","DISCIPL":"POL","LAT":44.42539,"LON":-69.001304},
+{"Name":"Belfast Boathouse ","ADDRESS":"34 Commercial Street","City":"Belfast","DISCIPL":"POL","LAT":44.42539,"LON":-69.001304},
+{"Name":"United Methodist Church ","ADDRESS":"23 Mill Lane","City":"Belfast","DISCIPL":"POL","LAT":44.442532,"LON":-69.000359},
+{"Name":"Center For All Seasons ","ADDRESS":"1 Center Drive","City":"Belgrade","DISCIPL":"POL","LAT":44.547459,"LON":-69.718752},
+{"Name":"Belmont Community Building ","ADDRESS":"613 Back Belmont Road","City":"Belmont","DISCIPL":"POL","LAT":44.375249,"LON":-69.127538},
+{"Name":"Sherman Town Office ","ADDRESS":"36 School Street","City":"Sherman","DISCIPL":"POL","LAT":45.870104,"LON":-68.384731},
+{"Name":"Benton Town Office ","ADDRESS":"1279 Clinton Avenue","City":"Benton","DISCIPL":"POL","LAT":44.584311,"LON":-69.55257},
+{"Name":"Berwick Town Hall ","ADDRESS":"11 Sullivan Square","City":"Berwick","DISCIPL":"POL","LAT":43.26784,"LON":-70.864974},
+{"Name":"Crescent Park School Gymnasium","ADDRESS":"19 Crescent Lane","City":"Bethel","DISCIPL":"POL","LAT":44.404161,"LON":-70.784966},
+{"Name":"Public Access Building","ADDRESS":"234 Pool Street","City":"Biddeford","DISCIPL":"POL","LAT":43.486304,"LON":-70.439992},
+{"Name":"J Richard Martin Community Center ","ADDRESS":"189 Alfred Street","City":"Biddeford","DISCIPL":"POL","LAT":43.488009,"LON":-70.45969},
+{"Name":"Rochambeau Club","ADDRESS":"329 South Street","City":"Biddeford","DISCIPL":"POL","LAT":43.495478,"LON":-70.481306},
+{"Name":"Princeton Town Office ","ADDRESS":"15 Depot Street","City":"Princeton","DISCIPL":"POL","LAT":45.224897,"LON":-67.573959},
+{"Name":"Quimby Middle School Gymnasium ","ADDRESS":"263 Main Street","City":"Bingham","DISCIPL":"POL","LAT":45.054805,"LON":-69.883212},
+{"Name":"Blaine Town Office ","ADDRESS":"52 Military Road","City":"Blaine","DISCIPL":"POL","LAT":46.517358,"LON":-67.884702},
+{"Name":"Blue Hill Town Hall ","ADDRESS":"18 Union Street","City":"Blue Hill","DISCIPL":"POL","LAT":44.413206,"LON":-68.590454},
+{"Name":"Boothbay Town Office ","ADDRESS":"1011 Wiscasset Road","City":"Boothbay","DISCIPL":"POL","LAT":43.876906,"LON":-69.63286},
+{"Name":"Boothbay Harbor Municipal Building","ADDRESS":"11 Howard Street","City":"Boothbay Harbor","DISCIPL":"POL","LAT":43.852155,"LON":-69.62953},
+{"Name":"Bowdoin Central School ","ADDRESS":"1460 Main Street","City":"Bowdoin","DISCIPL":"POL","LAT":44.03187,"LON":-69.934855},
+{"Name":"Bowdoinham Town Hall ","ADDRESS":"13 School Street","City":"Bowdoinham","DISCIPL":"POL","LAT":44.008627,"LON":-69.89926},
+{"Name":"Bowerbank Fire Station","ADDRESS":"650 Bowerbank Road","City":"Bowerbank","DISCIPL":"POL","LAT":45.292787,"LON":-69.200562},
+{"Name":"Bradford Town Office ","ADDRESS":"345 East Road","City":"Bradford","DISCIPL":"POL","LAT":45.070017,"LON":-68.915624},
+{"Name":"Bradley Municipal Building ","ADDRESS":"165B Main Street","City":"Bradley","DISCIPL":"POL","LAT":44.939097,"LON":-68.648328},
+{"Name":"Bremen Town Center ","ADDRESS":"208 Waldoboro Road","City":"Bremen","DISCIPL":"POL","LAT":44.036745,"LON":-69.415292},
+{"Name":"Brewer Auditorium ","ADDRESS":"203 State Street","City":"Brewer","DISCIPL":"POL","LAT":44.786486,"LON":-68.753645},
+{"Name":"Bridgewater Town Office ","ADDRESS":"11 Bootfoot Road","City":"Bridgewater","DISCIPL":"POL","LAT":46.419526,"LON":-67.877109},
+{"Name":"Bridgton Town Hall ","ADDRESS":"26 North High Street","City":"Bridgton","DISCIPL":"POL","LAT":44.054873,"LON":-70.716113},
+{"Name":"Brighton Town Office","ADDRESS":"Stagecoach Road","City":"Brighton Plt","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Bristol Town Hall","ADDRESS":"1268 Bristol Road","City":"Bristol","DISCIPL":"POL","LAT":43.957296,"LON":-69.509228},
+{"Name":"Brooklin Fire House ","ADDRESS":"25 Bay Road","City":"Brooklin","DISCIPL":"POL","LAT":44.270205,"LON":-68.565766},
+{"Name":"Brooks Fire House","ADDRESS":"19 Purple Heart Highway","City":"Brooks","DISCIPL":"POL","LAT":44.552758,"LON":-69.12359},
+{"Name":"Brooksville Municipal Building","ADDRESS":"1 Townhouse Road","City":"Brooksville","DISCIPL":"POL","LAT":44.346991,"LON":-68.684787},
+{"Name":"Danforth Town Hall ","ADDRESS":"52 Depot Street","City":"Brookton Twp w/ Danforth","DISCIPL":"POL","LAT":45.66034,"LON":-67.868345},
+{"Name":"Brownfield Municipal Building ","ADDRESS":"82 Main Street","City":"Brownfield","DISCIPL":"POL","LAT":43.942144,"LON":-70.895069},
+{"Name":"Brownville Elementary School ","ADDRESS":"774 Main Road","City":"Brownville","DISCIPL":"POL","LAT":45.345603,"LON":-69.051943},
+{"Name":"Brunswick Junior High School","ADDRESS":"65 Columbia Avenue","City":"Brunswick","DISCIPL":"POL","LAT":43.902957,"LON":-69.977675},
+{"Name":"Buckfield Municipal Center ","ADDRESS":"34 Turner Street","City":"Buckfield","DISCIPL":"POL","LAT":44.289072,"LON":-70.362083},
+{"Name":"G. H. Jewett School Gymnasium","ADDRESS":"66 Bridge Street","City":"Bucksport","DISCIPL":"POL","LAT":44.576202,"LON":-68.787596},
+{"Name":"Burlington Municipal Building ","ADDRESS":"1523 Long Ridge Road","City":"Burlington","DISCIPL":"POL","LAT":45.212579,"LON":-68.423786},
+{"Name":"Reynolds Corner Municipal Building","ADDRESS":"247 South Horseback Road","City":"Burnham","DISCIPL":"POL","LAT":44.660312,"LON":-69.360709},
+{"Name":"Buxton Municipal Complex/Town Hall ","ADDRESS":"185 Portland Road","City":"Buxton","DISCIPL":"POL","LAT":43.615712,"LON":-70.501957},
+{"Name":"Byron Town Hall ","ADDRESS":"1 Byron Village Road","City":"Byron","DISCIPL":"POL","LAT":44.719961,"LON":-70.628018},
+{"Name":"Calais Elementary School","ADDRESS":"53 Garfield Street","City":"Calais","DISCIPL":"POL","LAT":45.179927,"LON":-67.282118},
+{"Name":"Cambridge Municipal Building ","ADDRESS":"202 Ripley Road","City":"Cambridge","DISCIPL":"POL","LAT":45.022738,"LON":-69.457902},
+{"Name":"Camden Public Safety Building ","ADDRESS":"31 Washington Street","City":"Camden","DISCIPL":"POL","LAT":44.21052,"LON":-69.066865},
+{"Name":"Canaan Town Office ","ADDRESS":"277 Main Street","City":"Canaan","DISCIPL":"POL","LAT":44.762597,"LON":-69.560482},
+{"Name":"Canton Town Office","ADDRESS":"9 Staples Hill Road","City":"Canton","DISCIPL":"POL","LAT":44.439142,"LON":-70.314903},
+{"Name":"Cape Elizabeth High School Gymnasium","ADDRESS":"Ocean House Road","City":"Cape Elizabeth","DISCIPL":"POL","LAT":43.593208,"LON":-70.226908},
+{"Name":"Caratunk Town Office ","ADDRESS":"11 School Street","City":"Caratunk","DISCIPL":"POL","LAT":45.233371,"LON":-69.99281},
+{"Name":"Caribou Wellness & Recreation Center ","ADDRESS":"59 Bennett Drive","City":"Caribou","DISCIPL":"POL","LAT":46.865307,"LON":-68.004837},
+{"Name":"Golden Harvest Grange Hall","ADDRESS":"928 Main Road","City":"Carmel","DISCIPL":"POL","LAT":44.799306,"LON":-69.05733},
+{"Name":"Carrabassett Valley Town Office ","ADDRESS":"1001 Carriage Road","City":"Carrabassett Valley","DISCIPL":"POL","LAT":45.078095,"LON":-70.21167},
+{"Name":"Carroll Plantation Office ","ADDRESS":"644 Brown Road","City":"Carroll Plt","DISCIPL":"POL","LAT":45.388322,"LON":-68.063896},
+{"Name":"Carthage Town Office ","ADDRESS":"703A Carthage Road","City":"Carthage","DISCIPL":"POL","LAT":44.629278,"LON":-70.455642},
+{"Name":"Hodgdon Fire Station","ADDRESS":"Hodgdon Mills Road","City":"Hodgdon","DISCIPL":"POL","LAT":46.053925,"LON":-67.880559},
+{"Name":"Casco Community Center","ADDRESS":"940 Meadow Road","City":"Casco","DISCIPL":"POL","LAT":44.00445,"LON":-70.5228},
+{"Name":"Emerson Hall ","ADDRESS":"67 Court Street","City":"Castine","DISCIPL":"POL","LAT":44.389308,"LON":-68.798218},
+{"Name":"Castle Hill Grange Hall ","ADDRESS":"1953 State Road","City":"Castle Hill","DISCIPL":"POL","LAT":46.735126,"LON":-68.185539},
+{"Name":"Dawn F. Barnes Elementary ","ADDRESS":"1025 Van Buren Road","City":"Caswell","DISCIPL":"POL","LAT":46.979696,"LON":-67.820578},
+{"Name":"Chapman Ridge Runners Snowmobile Club","ADDRESS":"94 Town Hall Road","City":"Chapman","DISCIPL":"POL","LAT":46.651859,"LON":-68.11851},
+{"Name":"Charleston Community Center ","ADDRESS":"125 School Road","City":"Charleston","DISCIPL":"POL","LAT":45.083443,"LON":-69.055956},
+{"Name":"Charlotte Town Hall","ADDRESS":"1092 Ayers Junction Road","City":"Charlotte","DISCIPL":"POL","LAT":45.009587,"LON":-67.28221},
+{"Name":"Chebeague Island Hall & Community Center ","ADDRESS":"247 South Road","City":"Chebeague Island","DISCIPL":"POL","LAT":43.740029,"LON":-70.107627},
+{"Name":"Chelsea Elementary School","ADDRESS":"566 Togus Road","City":"Chelsea","DISCIPL":"POL","LAT":44.268142,"LON":-69.698008},
+{"Name":"Cherryfield Town Office Meeting Room ","ADDRESS":"12 Municipal Way","City":"Cherryfield","DISCIPL":"POL","LAT":44.607299,"LON":-67.925837},
+{"Name":"Marianne Municipal Building ","ADDRESS":"43 South Chester Road","City":"Chester","DISCIPL":"POL","LAT":45.437929,"LON":-68.458305},
+{"Name":"Chesterville Town Office ","ADDRESS":"409 Dutch Gap Road","City":"Chesterville","DISCIPL":"POL","LAT":44.566312,"LON":-70.086681},
+{"Name":"China Town Office","ADDRESS":"571 Lakeview Drive","City":"China","DISCIPL":"POL","LAT":44.42788,"LON":-69.537115},
+{"Name":"Clifton Municipal Building","ADDRESS":"135 Airline Road","City":"Clifton","DISCIPL":"POL","LAT":44.80016,"LON":-68.548271},
+{"Name":"Clinton Town Office (Banquet Hall)","ADDRESS":"27 Baker Street","City":"Clinton","DISCIPL":"POL","LAT":44.636414,"LON":-69.507911},
+{"Name":"Topsfield Municipal Building ","ADDRESS":"48 North Road","City":"Topsfield","DISCIPL":"POL","LAT":45.422355,"LON":-67.736984},
+{"Name":"Columbia Town Hall ","ADDRESS":"106 Epping Road","City":"Columbia","DISCIPL":"POL","LAT":44.642428,"LON":-67.763795},
+{"Name":"Columbia Falls Municipal Building","ADDRESS":"8 Point Street","City":"Columbia Falls","DISCIPL":"POL","LAT":44.642748,"LON":-67.732702},
+{"Name":"Caribou Wellness & Recreation Center ","ADDRESS":"59 Bennett Drive","City":"Caribou","DISCIPL":"POL","LAT":46.865307,"LON":-68.004837},
+{"Name":"Cathance Grange Hall","ADDRESS":"Route 191-Cooper Highway","City":"Cooper","DISCIPL":"POL","LAT":44.975498,"LON":-67.450761},
+{"Name":"Town Office ","ADDRESS":"5 Currie Street","City":"Coplin Plt","DISCIPL":"POL","LAT":45.098728,"LON":-70.469734},
+{"Name":"Corinna Fire Annex ","ADDRESS":"37 Exeter Road","City":"Corinna","DISCIPL":"POL","LAT":44.922734,"LON":-69.256443},
+{"Name":"Corinth Town Office Conference Room","ADDRESS":"31 Exeter Road","City":"Corinth","DISCIPL":"POL","LAT":45.002815,"LON":-69.024145},
+{"Name":"Pike Memorial Hall","ADDRESS":"17 Maple Street","City":"Cornish","DISCIPL":"POL","LAT":43.805083,"LON":-70.814862},
+{"Name":"Cornville Town Hall ","ADDRESS":"493 West Ridge Road","City":"Cornville","DISCIPL":"POL","LAT":44.848278,"LON":-69.677464},
+{"Name":"Great Cranberry Island Community Center ","ADDRESS":"191 Cranberry Road","City":"Cranberry Isles","DISCIPL":"POL","LAT":44.24672,"LON":-68.262777},
+{"Name":"Islesford Neighborhood House ","ADDRESS":"10 Mosswood Road","City":"Cranberry Isles","DISCIPL":"POL","LAT":44.262588,"LON":-68.235034},
+{"Name":"Crawford Town Hall ","ADDRESS":"3190 Airline Road","City":"Crawford","DISCIPL":"POL","LAT":45.056597,"LON":-67.549805},
+{"Name":"New Canada Community Center ","ADDRESS":"1809 Caribou Road","City":"New Canada","DISCIPL":"POL","LAT":47.189332,"LON":-68.473592},
+{"Name":"Crystal Town Office ","ADDRESS":"272 Crystal Road","City":"Crystal","DISCIPL":"POL","LAT":46.020545,"LON":-68.403262},
+{"Name":"Cumberland Town Hall ","ADDRESS":"290 Tuttle Road","City":"Cumberland","DISCIPL":"POL","LAT":43.789303,"LON":-70.245313},
+{"Name":"Cushing Community Center ","ADDRESS":"39 Cross Road","City":"Cushing","DISCIPL":"POL","LAT":44.021014,"LON":-69.249918},
+{"Name":"Cutler Town Office-Library ","ADDRESS":"2655 Cutler Road","City":"Cutler","DISCIPL":"POL","LAT":44.669917,"LON":-67.247285},
+{"Name":"Governor Brann School House ","ADDRESS":"218 Caribou Road, Rt #1","City":"Cyr Plt","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Dallas Plantation Townhouse","ADDRESS":"436 Dallas Hill Road","City":"Rangeley","DISCIPL":"POL","LAT":44.975373,"LON":-70.593255},
+{"Name":"Damariscotta Town Hall ","ADDRESS":"21 School Street","City":"Damariscotta","DISCIPL":"POL","LAT":44.033686,"LON":-69.518518},
+{"Name":"Danforth Town Hall ","ADDRESS":"52 Depot Street","City":"Danforth (and Brookton Twp)","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Dayton Town Office ","ADDRESS":"33 Clarks Mills Road","City":"Dayton","DISCIPL":"POL","LAT":43.546378,"LON":-70.594141},
+{"Name":"Deblois Town Hall","ADDRESS":"8 Lane Road","City":"Deblois","DISCIPL":"POL","LAT":44.714492,"LON":-68.026778},
+{"Name":"Dedham Fire Station ","ADDRESS":"8 Bald Mountain Road","City":"Dedham","DISCIPL":"POL","LAT":44.69915,"LON":-68.642659},
+{"Name":"Deer Isle Municipal Building","ADDRESS":"70 Church Street","City":"Deer Isle","DISCIPL":"POL","LAT":44.22072,"LON":-68.676409},
+{"Name":"Denmark Municipal Building","ADDRESS":"62 East Main Street","City":"Denmark","DISCIPL":"POL","LAT":43.971767,"LON":-70.798221},
+{"Name":"Moose River Town Office ","ADDRESS":"705 Main Street","City":"Dennistown Plt","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Town Office/Community Center","ADDRESS":"2 Main Street","City":"Dennysville","DISCIPL":"POL","LAT":44.899993,"LON":-67.227725},
+{"Name":"DRCS Town Hall ","ADDRESS":"35 South Main Street","City":"Detroit","DISCIPL":"POL","LAT":44.78989,"LON":-69.28925},
+{"Name":"Dexter Town Hall ","ADDRESS":"10 Hall Street","City":"Dexter","DISCIPL":"POL","LAT":45.024691,"LON":-69.289722},
+{"Name":"American Legion","ADDRESS":"8 River Lane","City":"Dixfield","DISCIPL":"POL","LAT":44.530744,"LON":-70.457186},
+{"Name":"Dixmont Town Office ","ADDRESS":"758 Western Avenue","City":"Dixmont","DISCIPL":"POL","LAT":44.695197,"LON":-69.083944},
+{"Name":"Dover-Foxcroft Municipal Gymnasium","ADDRESS":"48 Morton Avenue","City":"Dover-Foxcroft","DISCIPL":"POL","LAT":45.192105,"LON":-69.229816},
+{"Name":"Pownalborough Hall ","ADDRESS":"314 Patterson Road","City":"Dresden","DISCIPL":"POL","LAT":44.08633,"LON":-69.762495},
+{"Name":"Drew Plt. Fire Building/ Town Hall ","ADDRESS":"65 Center Street","City":"Drew Plt","DISCIPL":"POL","LAT":45.589483,"LON":-68.078732},
+{"Name":"Durham Community School ","ADDRESS":"654 Hallowell Road","City":"Durham","DISCIPL":"POL","LAT":43.971101,"LON":-70.12655},
+{"Name":"Dyer Brook Town Office ","ADDRESS":"864 Dyer Brook Road","City":"Dyer Brook","DISCIPL":"POL","LAT":46.075962,"LON":-68.186949},
+{"Name":"Eagle Lake Municipal Building ","ADDRESS":"36 Devoe Brook Road","City":"Eagle Lake","DISCIPL":"POL","LAT":47.064918,"LON":-68.641748},
+{"Name":"East Machias Municipal Building ","ADDRESS":"571 Main Street","City":"East Machias","DISCIPL":"POL","LAT":44.732739,"LON":-67.396649},
+{"Name":"East Millinocket Municipal Building ","ADDRESS":"53 Main Street","City":"East Millinocket","DISCIPL":"POL","LAT":45.625437,"LON":-68.575106},
+{"Name":"Eastbrook Community Center","ADDRESS":"959 Eastbrook Road","City":"Eastbrook","DISCIPL":"POL","LAT":44.664273,"LON":-68.26523},
+{"Name":"Easton Town Office ","ADDRESS":"3 Station Road","City":"Easton","DISCIPL":"POL","LAT":46.641785,"LON":-67.91237},
+{"Name":"Shead High School ","ADDRESS":"89 High Street","City":"Eastport","DISCIPL":"POL","LAT":44.912549,"LON":-66.992188},
+{"Name":"Eddington Municipal Building-Meeting Room","ADDRESS":"906 Main Road","City":"Eddington","DISCIPL":"POL","LAT":44.813608,"LON":-68.62196},
+{"Name":"Edgecomb Town Hall ","ADDRESS":"16 Town Hall Road","City":"Edgecomb","DISCIPL":"POL","LAT":43.982726,"LON":-69.631679},
+{"Name":"Edinburg Town Building","ADDRESS":"595 Edinburg Road","City":"Edinburg","DISCIPL":"POL","LAT":45.201053,"LON":-68.629544},
+{"Name":"Marshwood Middle School ","ADDRESS":"626 Harold L. Dow Highway","City":"Eliot","DISCIPL":"POL","LAT":43.14726,"LON":-70.791894},
+{"Name":"Ellsworth City Hall Auditorium ","ADDRESS":"1 City Hall Plaza","City":"Ellsworth","DISCIPL":"POL","LAT":44.542287,"LON":-68.424005},
+{"Name":"Your Place Community Center ","ADDRESS":"4 Old Mill Road","City":"Ellsworth","DISCIPL":"POL","LAT":44.563092,"LON":-68.440206},
+{"Name":"Maine Coast Baptist Church Gymnasium ","ADDRESS":"867 Bangor Road","City":"Ellsworth","DISCIPL":"POL","LAT":44.596493,"LON":-68.5052},
+{"Name":"Ellsworth City Hall - Council Chambers ","ADDRESS":"1 City Hall Plaza","City":"Ellsworth","DISCIPL":"POL","LAT":44.542287,"LON":-68.424005},
+{"Name":"Embden Town Office ","ADDRESS":"809 Embden Pond Road","City":"Embden","DISCIPL":"POL","LAT":44.919134,"LON":-69.949953},
+{"Name":"Cole Memorial Building","ADDRESS":"789 Hammett Road","City":"Enfield","DISCIPL":"POL","LAT":45.248234,"LON":-68.589354},
+{"Name":"Etna Community Hall ","ADDRESS":"17 Shadow Lane","City":"Etna","DISCIPL":"POL","LAT":44.811748,"LON":-69.123257},
+{"Name":"Eustis Town Office ","ADDRESS":"88 Main Street","City":"Eustis","DISCIPL":"POL","LAT":45.21645,"LON":-70.477206},
+{"Name":"Exeter Town Office ","ADDRESS":"1221 Stetson Road","City":"Exeter","DISCIPL":"POL","LAT":44.969332,"LON":-69.140994},
+{"Name":"Fairfield Community Center ","ADDRESS":"61 Water Street","City":"Fairfield","DISCIPL":"POL","LAT":44.58454,"LON":-69.594608},
+{"Name":"Falmouth High School ","ADDRESS":"74 Woodville Road","City":"Falmouth","DISCIPL":"POL","LAT":43.740454,"LON":-70.272571},
+{"Name":"Hall-Dale Middle School Gymnasium","ADDRESS":"111 Maple Street","City":"Farmingdale","DISCIPL":"POL","LAT":44.267154,"LON":-69.793078},
+{"Name":"Farmington Community Center ","ADDRESS":"127 Middle Street","City":"Farmington","DISCIPL":"POL","LAT":44.670112,"LON":-70.145482},
+{"Name":"Starling Grange Hall ","ADDRESS":"2769 Main Street","City":"Fayette","DISCIPL":"POL","LAT":44.406079,"LON":-70.008313},
+{"Name":"Fort Fairfield Community Center ","ADDRESS":"18 Community Center Drive","City":"Fort Fairfield","DISCIPL":"POL","LAT":46.770544,"LON":-67.836074},
+{"Name":"Fort Kent Town Office ","ADDRESS":"416 West Main Street","City":"Fort Kent","DISCIPL":"POL","LAT":47.249389,"LON":-68.599932},
+{"Name":"Frankfort Elementary School ","ADDRESS":"112 North Searsport Road","City":"Frankfort","DISCIPL":"POL","LAT":44.553227,"LON":-68.95605},
+{"Name":"Franklin Community Center-Meeting Room ","ADDRESS":"34 Main Street","City":"Franklin","DISCIPL":"POL","LAT":44.958775,"LON":-70.638977},
+{"Name":"Freedom Town Office-Election Hall","ADDRESS":"71 Pleasant Street","City":"Freedom","DISCIPL":"POL","LAT":44.526309,"LON":-69.294442},
+{"Name":"Freeport High School Gymnasium ","ADDRESS":"Holbrook Street","City":"Freeport","DISCIPL":"POL","LAT":43.856661,"LON":-70.108572},
+{"Name":"Frenchboro Community Building","ADDRESS":"1 Executive Drive","City":"Frenchboro","DISCIPL":"POL","LAT":44.118038,"LON":-68.360345},
+{"Name":"Frenchville Community Center ","ADDRESS":"343-A US Route 1","City":"Frenchville","DISCIPL":"POL","LAT":47.279632,"LON":-68.388146},
+{"Name":"Friendship Town Office ","ADDRESS":"6 Harbor Road","City":"Friendship","DISCIPL":"POL","LAT":43.983436,"LON":-69.33442},
+{"Name":"Ferry Office","ADDRESS":"7 Ferry Landing Road, Raymond","City":"Frye Island","DISCIPL":"POL","LAT":43.849706,"LON":-70.508976},
+{"Name":"American Legion Building","ADDRESS":"Bradley Street","City":"Fryeburg","DISCIPL":"POL","LAT":44.017557,"LON":-70.97451},
+{"Name":"Boys & Girls Club ","ADDRESS":"14 Pray Street","City":"Gardiner","DISCIPL":"POL","LAT":44.229885,"LON":-69.784973},
+{"Name":"Garfield Town Garage","ADDRESS":"8 Cross Road","City":"Garfield Plt","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Garland Town Office ","ADDRESS":"5 Dexter Road","City":"Garland","DISCIPL":"POL","LAT":45.038769,"LON":-69.160138},
+{"Name":"Georgetown Central School ","ADDRESS":"52 Bay Point Road","City":"Georgetown","DISCIPL":"POL","LAT":43.800846,"LON":-69.75656},
+{"Name":"Gilead Town Hall ","ADDRESS":"10 Depot Street","City":"Gilead","DISCIPL":"POL","LAT":44.394419,"LON":-70.972759},
+{"Name":"Glenburn Municipal Building ","ADDRESS":"144 Lakeview Road","City":"Glenburn","DISCIPL":"POL","LAT":44.913471,"LON":-68.824625},
+{"Name":"Gorham Middle School ","ADDRESS":"106 Weeks Road","City":"Gorham","DISCIPL":"POL","LAT":43.666549,"LON":-70.441139},
+{"Name":"Gorham Municipal Center - Shaw Gymnasium","ADDRESS":"75 South Street","City":"Gorham","DISCIPL":"POL","LAT":43.676895,"LON":-70.443921},
+{"Name":"Gouldsboro Community Center Gymnasium","ADDRESS":"679 Pond Road","City":"Gouldsboro","DISCIPL":"POL","LAT":44.441302,"LON":-68.06028},
+{"Name":"Grand Isle Town Office- Meeting Room","ADDRESS":"366 Main Street","City":"Grand Isle","DISCIPL":"POL","LAT":47.307223,"LON":-68.154066},
+{"Name":"James Brite Schoolhouse ","ADDRESS":"15 Water Street","City":"Grand Lake Stream Plt","DISCIPL":"POL","LAT":45.178653,"LON":-67.774732},
+{"Name":"Newbegin Gym","ADDRESS":"22 Main Street","City":"Gray","DISCIPL":"POL","LAT":43.887547,"LON":-70.328668},
+{"Name":"Great Pond Town Hall ","ADDRESS":"1235 Great Pond Road","City":"Great Pond","DISCIPL":"POL","LAT":44.937408,"LON":-68.280819},
+{"Name":"Greenbush Town Hall ","ADDRESS":"132 Military Road","City":"Greenbush","DISCIPL":"POL","LAT":45.12251,"LON":-68.608823},
+{"Name":"Greene Town Office","ADDRESS":"220 Main Street","City":"Greene","DISCIPL":"POL","LAT":44.193476,"LON":-70.13393},
+{"Name":"Greenville Town Hall ","ADDRESS":"7 Minden Street","City":"Greenville","DISCIPL":"POL","LAT":45.458413,"LON":-69.59106},
+{"Name":"American Legion Hall ","ADDRESS":"595 Gore Road","City":"Greenwood","DISCIPL":"POL","LAT":44.399194,"LON":-70.695315},
+{"Name":"Guilford Fire Station ","ADDRESS":"4 School Street","City":"Guilford","DISCIPL":"POL","LAT":45.169309,"LON":-69.386857},
+{"Name":"Hall Dale Elementary School ","ADDRESS":"26 Garden Lane","City":"Hallowell","DISCIPL":"POL","LAT":44.285902,"LON":-69.790879},
+{"Name":"Roosevelt School ","ADDRESS":"588 Hamlin Road","City":"Hamlin","DISCIPL":"POL","LAT":47.093831,"LON":-67.860513},
+{"Name":"Hammond School House","ADDRESS":"13 Burnt Brow Road","City":"Hammond","DISCIPL":"POL","LAT":46.198479,"LON":-67.918042},
+{"Name":"Municipal Building Community Room ","ADDRESS":"106 Western Avenue","City":"Hampden","DISCIPL":"POL","LAT":44.746158,"LON":-68.847444},
+{"Name":"Hancock Town Hall ","ADDRESS":"18 Point Road","City":"Hancock","DISCIPL":"POL","LAT":44.527009,"LON":-68.253287},
+{"Name":"Hanover Town Office ","ADDRESS":"21 Ferry Road","City":"Hanover","DISCIPL":"POL","LAT":44.493857,"LON":-70.695443},
+{"Name":"Harmony Elementary School","ADDRESS":"18 Main Street","City":"Harmony","DISCIPL":"POL","LAT":44.975569,"LON":-69.547501},
+{"Name":"Merriconeag Grange Hall ","ADDRESS":"529 Harpswell Neck Road","City":"Harpswell","DISCIPL":"POL","LAT":43.821936,"LON":-69.96491},
+{"Name":"Cundy's Harbor Community Building ","ADDRESS":"837 Cundy's Harbor Road","City":"Harpswell","DISCIPL":"POL","LAT":43.797948,"LON":-69.893824},
+{"Name":"Old Orr's Island School House ","ADDRESS":"1594 Harpswell Islands Road","City":"Harpswell","DISCIPL":"POL","LAT":43.759404,"LON":-69.979064},
+{"Name":"Harrington Town Office ","ADDRESS":"114 East Main Street","City":"Harrington","DISCIPL":"POL","LAT":44.621699,"LON":-67.797796},
+{"Name":"Harrison Town Office Meeting Room","ADDRESS":"20 Front Street","City":"Harrison","DISCIPL":"POL","LAT":44.109088,"LON":-70.679214},
+{"Name":"Hartford Town Hall ","ADDRESS":"1190 Main Street","City":"Hartford","DISCIPL":"POL","LAT":44.372812,"LON":-70.347089},
+{"Name":"Hartland Town Hall ","ADDRESS":"21 Academy Street","City":"Hartland","DISCIPL":"POL","LAT":44.883516,"LON":-69.446634},
+{"Name":"Haynesville Town Office ","ADDRESS":"16 Danforth Road","City":"Haynesville","DISCIPL":"POL","LAT":45.824815,"LON":-67.987265},
+{"Name":"Hebron Town Office ","ADDRESS":"351 Paris Road","City":"Hebron","DISCIPL":"POL","LAT":44.209783,"LON":-70.472328},
+{"Name":"Hermon Elementary School Gymnasium","ADDRESS":"235 Billings Road","City":"Hermon","DISCIPL":"POL","LAT":44.821096,"LON":-68.893673},
+{"Name":"Patten Fire Station","ADDRESS":"27 Dearborn Street","City":"Hersey","DISCIPL":"POL","LAT":46.073381,"LON":-68.434164},
+{"Name":"Town House ","ADDRESS":"Long Falls Dam Road","City":"Highland Plt","DISCIPL":"POL","LAT":45.090954,"LON":-70.130668},
+{"Name":"Hiram Town Office ","ADDRESS":"25 Allard Circle","City":"Hiram","DISCIPL":"POL","LAT":43.811759,"LON":-70.878273},
+{"Name":"Hodgdon Town Office ","ADDRESS":"179 Hodgdon Mills Road","City":"Hodgdon","DISCIPL":"POL","LAT":46.05449,"LON":-67.865075},
+{"Name":"Holden Municipal Building ","ADDRESS":"570 Main Road","City":"Holden","DISCIPL":"POL","LAT":44.755949,"LON":-68.662695},
+{"Name":"Hollis Fire Station #2 ","ADDRESS":"405 Plains Road","City":"Hollis","DISCIPL":"POL","LAT":43.656814,"LON":-70.629525},
+{"Name":"Hope Town Office ","ADDRESS":"441 Camden Road","City":"Hope","DISCIPL":"POL","LAT":44.264433,"LON":-69.157608},
+{"Name":"Gentle Memorial Building ","ADDRESS":"128 Main Street","City":"Houlton","DISCIPL":"POL","LAT":46.125668,"LON":-67.834622},
+{"Name":"Howland Town Office","ADDRESS":"8 Main Street","City":"Howland","DISCIPL":"POL","LAT":45.241221,"LON":-68.656716},
+{"Name":"Hudson Town Hall ","ADDRESS":"2334 Hudson Road","City":"Hudson","DISCIPL":"POL","LAT":45.001711,"LON":-68.887443},
+{"Name":"Indian Twp Tribal Office","ADDRESS":"8 Kennabasis Road","City":"Indian Twp","DISCIPL":"POL","LAT":45.240493,"LON":-67.590541},
+{"Name":"Industry Town Hall ","ADDRESS":"1033 Industry Road","City":"Industry","DISCIPL":"POL","LAT":44.718686,"LON":-70.065622},
+{"Name":"Island Falls Municipal Office ","ADDRESS":"68 Houlton Road","City":"Island Falls","DISCIPL":"POL","LAT":46.021565,"LON":-68.242352},
+{"Name":"Revere Memorial Hall","ADDRESS":"1 Main Street","City":"Isle Au Haut","DISCIPL":"POL","LAT":44.156082,"LON":-68.664581},
+{"Name":"Islesboro Public Safety Meeting Room","ADDRESS":"150 Main Road","City":"Islesboro","DISCIPL":"POL","LAT":44.293594,"LON":-68.909032},
+{"Name":"Jackman Municipal Conference Room","ADDRESS":"369 Main Street","City":"Jackman","DISCIPL":"POL","LAT":45.775312,"LON":-70.336528},
+{"Name":"Jackson Town Office ","ADDRESS":"730 Moosehead Trail","City":"Jackson","DISCIPL":"POL","LAT":44.59864,"LON":-69.142071},
+{"Name":"Jay Community Building ","ADDRESS":"13 Community Drive","City":"Jay","DISCIPL":"POL","LAT":44.494458,"LON":-70.200972},
+{"Name":"Jefferson Fire Station ","ADDRESS":"204 Waldoboro Road","City":"Jefferson","DISCIPL":"POL","LAT":44.201087,"LON":-69.457133},
+{"Name":"Keith H. Schoppee Municipal Building","ADDRESS":"23 Station Road","City":"Jonesboro","DISCIPL":"POL","LAT":44.667183,"LON":-67.612047},
+{"Name":"Jonesport Town Office","ADDRESS":"70 Snare Creek Lane","City":"Jonesport","DISCIPL":"POL","LAT":44.552792,"LON":-67.618533},
+{"Name":"Kenduskeag Town Office ","ADDRESS":"4010 Broadway","City":"Kenduskeag","DISCIPL":"POL","LAT":44.920198,"LON":-68.931321},
+{"Name":"Edward C. Winston Auditorium ","ADDRESS":"1 Summer Street","City":"Kennebunk","DISCIPL":"POL","LAT":43.387792,"LON":-70.536955},
+{"Name":"Village Fire Station ","ADDRESS":"32 North Street","City":"Kennebunkport","DISCIPL":"POL","LAT":43.366347,"LON":-70.475077},
+{"Name":"Webster Hall ","ADDRESS":"38 School Street","City":"Kingfield","DISCIPL":"POL","LAT":44.955791,"LON":-70.155075},
+{"Name":"Kittery Community Center","ADDRESS":"120 Rogers Road","City":"Kittery","DISCIPL":"POL","LAT":43.097227,"LON":-70.737495},
+{"Name":"Knox Town Office ","ADDRESS":"10 Abbott Road","City":"Knox","DISCIPL":"POL","LAT":44.539991,"LON":-69.249962},
+{"Name":"Lagrange Town Office ","ADDRESS":"5791 Bennoch Road","City":"Lagrange","DISCIPL":"POL","LAT":45.168826,"LON":-68.846792},
+{"Name":"Lake View Town Office","ADDRESS":"27 Church Street","City":"Brownville","DISCIPL":"POL","LAT":45.310667,"LON":-69.032427},
+{"Name":"Lakeville Town Office (McKinley School House)","ADDRESS":"828 Bottle Lake Road","City":"Lakeville","DISCIPL":"POL","LAT":45.322591,"LON":-68.068631},
+{"Name":"Lamoine Town Office ","ADDRESS":"606 Douglas Highway","City":"Lamoine","DISCIPL":"POL","LAT":44.500539,"LON":-68.347094},
+{"Name":"Lebanon Elementary School ","ADDRESS":"65 Upper Guinea Road","City":"Lebanon","DISCIPL":"POL","LAT":43.401533,"LON":-70.909554},
+{"Name":"Eula Ham Municipal Building ","ADDRESS":"29 Winn Road","City":"Lee","DISCIPL":"POL","LAT":45.388083,"LON":-68.293972},
+{"Name":"Leeds Town Office ","ADDRESS":"8 Community Drive","City":"Leeds","DISCIPL":"POL","LAT":44.303402,"LON":-70.119498},
+{"Name":"Levant Town Office","ADDRESS":"691 Townhouse Road","City":"Levant","DISCIPL":"POL","LAT":44.896403,"LON":-68.950964},
+{"Name":"Longley Elementary School","ADDRESS":"145 Birch Street","City":"Lewiston","DISCIPL":"POL","LAT":44.093897,"LON":-70.206687},
+{"Name":"Liberty Town Office-Overlock Room ","ADDRESS":"7 Water Street","City":"Liberty","DISCIPL":"POL","LAT":44.39077,"LON":-69.306025},
+{"Name":"Limerick Municipal Building ","ADDRESS":"55 Washington Street","City":"Limerick","DISCIPL":"POL","LAT":43.695903,"LON":-70.788534},
+{"Name":"Limestone Municipal Building ","ADDRESS":"93 Main Street","City":"Limestone","DISCIPL":"POL","LAT":46.905989,"LON":-67.826173},
+{"Name":"Limington Municipal Complex ","ADDRESS":"425 Sokokis Avenue","City":"Limington","DISCIPL":"POL","LAT":43.741628,"LON":-70.689896},
+{"Name":"Mattanawcook Academy Gymnasium","ADDRESS":"33 Reed Drive","City":"Lincoln","DISCIPL":"POL","LAT":45.379904,"LON":-68.49763},
+{"Name":"Lincoln Plt Town Hall","ADDRESS":"260 Wilsons Mills Road","City":"Lincoln Plt","DISCIPL":"POL","LAT":44.932472,"LON":-71.028813},
+{"Name":"Lincolnville Central School ","ADDRESS":"523 Hope Road","City":"Lincolnville","DISCIPL":"POL","LAT":44.235741,"LON":-69.109912},
+{"Name":"Linneus Town Office ","ADDRESS":"1185 Hodgdon Mills Road","City":"Linneus","DISCIPL":"POL","LAT":46.041225,"LON":-67.933291},
+{"Name":"Superintendent's Office Building Gymnasium ","ADDRESS":"19 Gartley Street","City":"Lisbon","DISCIPL":"POL","LAT":44.02788,"LON":-70.105729},
+{"Name":"Litchfield Sportsmen's Club ","ADDRESS":"2253 Hallowell Road","City":"Litchfield","DISCIPL":"POL","LAT":44.165754,"LON":-69.942788},
+{"Name":"Littleton Town Office ","ADDRESS":"1536 US Highway 1","City":"Littleton","DISCIPL":"POL","LAT":46.185186,"LON":-67.841287},
+{"Name":"Livermore Town Office ","ADDRESS":"10 Crash Road","City":"Livermore","DISCIPL":"POL","LAT":44.441479,"LON":-70.217338},
+{"Name":"Livermore Falls Municipal Building ","ADDRESS":"2 Main Street","City":"Livermore Falls","DISCIPL":"POL","LAT":44.472446,"LON":-70.189655},
+{"Name":"Long Island Town Hall ","ADDRESS":"105 Wharf Street","City":"Long Island","DISCIPL":"POL","LAT":43.691492,"LON":-70.163994},
+{"Name":"Lovell Town Office ","ADDRESS":"1133 Main Street","City":"Lovell","DISCIPL":"POL","LAT":44.183804,"LON":-70.890232},
+{"Name":"Lowell Town Office ","ADDRESS":"129 West Old Main Road","City":"Lowell","DISCIPL":"POL","LAT":45.211253,"LON":-68.47792},
+{"Name":"Lubec Municipal Building","ADDRESS":"40 School Street","City":"Lubec","DISCIPL":"POL","LAT":44.860241,"LON":-66.985976},
+{"Name":"Ludlow Town Office","ADDRESS":"831 Ludlow Road","City":"Ludlow","DISCIPL":"POL","LAT":46.150373,"LON":-67.903},
+{"Name":"Lyman Town Hall ","ADDRESS":"11 South Waterboro Road","City":"Lyman","DISCIPL":"POL","LAT":43.504923,"LON":-70.580366},
+{"Name":"Machias Town Office ","ADDRESS":"7 Court Street, Suite 1","City":"Machias","DISCIPL":"POL","LAT":44.718492,"LON":-67.453258},
+{"Name":"Machiasport Municipal Complex ","ADDRESS":"8 Unity Square","City":"Machiasport","DISCIPL":"POL","LAT":44.681052,"LON":-67.40692},
+{"Name":"Macwahoc Town Office ","ADDRESS":"48 Kingman Road","City":"Macwahoc Plt","DISCIPL":"POL","LAT":45.61733,"LON":-68.258959},
+{"Name":"Knights Of Columbus Hall ","ADDRESS":"172 Fox Street","City":"Madawaska","DISCIPL":"POL","LAT":47.352659,"LON":-68.346589},
+{"Name":"Stockholm Community Center","ADDRESS":"62 School Street","City":"Madawaska Lake Twp","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Madison Fire Station","ADDRESS":"26 Weston Avenue","City":"Madison","DISCIPL":"POL","LAT":44.797741,"LON":-69.879782},
+{"Name":"Magalloway Town Hall ","ADDRESS":"3682 Dam Road","City":"Magalloway Plt","DISCIPL":"POL","LAT":44.876504,"LON":-71.043262},
+{"Name":"Manchester Fire Station ","ADDRESS":"37 Readfield Road","City":"Manchester","DISCIPL":"POL","LAT":44.325268,"LON":-69.861897},
+{"Name":"Mapleton Fire Station ","ADDRESS":"117 Pulcifur Road","City":"Mapleton","DISCIPL":"POL","LAT":46.699763,"LON":-68.136848},
+{"Name":"Mariaville Town Office ","ADDRESS":"1686 Mariaville Road","City":"Mariaville","DISCIPL":"POL","LAT":44.698068,"LON":-68.414391},
+{"Name":"Mars Hill Fire Station ","ADDRESS":"12 Market Street","City":"Mars Hill","DISCIPL":"POL","LAT":46.514054,"LON":-67.865502},
+{"Name":"Marshfield Town Office ","ADDRESS":"187 Northfield Road","City":"Marshfield","DISCIPL":"POL","LAT":44.741183,"LON":-67.493822},
+{"Name":"Masardis Municipal Building ","ADDRESS":"26 School Street","City":"Masardis","DISCIPL":"POL","LAT":46.500483,"LON":-68.362526},
+{"Name":"Matinicus Town Office","ADDRESS":"17 South Road","City":"Matinicus Isle","DISCIPL":"POL","LAT":43.859262,"LON":-68.893861},
+{"Name":"Mattawamkeag Municipal Building ","ADDRESS":"327 Main Street","City":"Mattawamkeag","DISCIPL":"POL","LAT":45.551865,"LON":-68.332451},
+{"Name":"Maxfield Town Office ","ADDRESS":"231 River Road","City":"Maxfield","DISCIPL":"POL","LAT":45.271949,"LON":-68.773067},
+{"Name":"Municipal Town Office Gymnasium ","ADDRESS":"108 Lewiston Street","City":"Mechanic Falls","DISCIPL":"POL","LAT":44.104363,"LON":-70.366854},
+{"Name":"Meddybemps Community Center ","ADDRESS":"849 Main Street","City":"Meddybemps","DISCIPL":"POL","LAT":45.038449,"LON":-67.357159},
+{"Name":"Medford Town Office ","ADDRESS":"13 Trestle Road","City":"Medford","DISCIPL":"POL","LAT":45.27201,"LON":-68.848087},
+{"Name":"Medway Fire Station","ADDRESS":"23 Grindstone Road","City":"Medway","DISCIPL":"POL","LAT":45.683489,"LON":-68.574365},
+{"Name":"Mercer Town Office ","ADDRESS":"1015 Beech Hill Road","City":"Mercer","DISCIPL":"POL","LAT":44.668835,"LON":-69.900853},
+{"Name":"Merrill Town Office ","ADDRESS":"3391 Route 2","City":"Merrill","DISCIPL":"POL","LAT":46.164217,"LON":-68.23225},
+{"Name":"Calvin P. Lyons Hall ","ADDRESS":"134 Main Street","City":"Mexico","DISCIPL":"POL","LAT":44.556034,"LON":-70.541055},
+{"Name":"Milbridge Complex (Fire Station)","ADDRESS":"14 School Street","City":"Milbridge","DISCIPL":"POL","LAT":44.538884,"LON":-67.881761},
+{"Name":"Milford Town Hall ","ADDRESS":"62 Davenport Street","City":"Milford","DISCIPL":"POL","LAT":44.945257,"LON":-68.645605},
+{"Name":"Stearns High School ","ADDRESS":"199 State Street","City":"Millinocket","DISCIPL":"POL","LAT":45.66129,"LON":-68.705946},
+{"Name":"Milo Town Hall ","ADDRESS":"6 Pleasant Street","City":"Milo","DISCIPL":"POL","LAT":45.253806,"LON":-68.985589},
+{"Name":"Minot Town Office ","ADDRESS":"329 Woodman Hill Road","City":"Minot","DISCIPL":"POL","LAT":44.109668,"LON":-70.329658},
+{"Name":"Monhegan Memorial Library ","ADDRESS":"10 Monhegan Avenue","City":"Monhegan","DISCIPL":"POL","LAT":43.762307,"LON":-69.320324},
+{"Name":"Cumston Hall-Lower Level","ADDRESS":"796 Main Street","City":"Monmouth","DISCIPL":"POL","LAT":44.241904,"LON":-70.034553},
+{"Name":"Monroe Town Hall ","ADDRESS":"8 Swanlake Avenue","City":"Monroe","DISCIPL":"POL","LAT":44.614872,"LON":-69.018131},
+{"Name":"Monson Town Office ","ADDRESS":"10 Tenney Hill Road","City":"Monson","DISCIPL":"POL","LAT":45.257997,"LON":-69.495033},
+{"Name":"Monticello Town Office ","ADDRESS":"405 US Highway 1","City":"Monticello","DISCIPL":"POL","LAT":46.253913,"LON":-67.840696},
+{"Name":"Montville Town House (Town Hall)","ADDRESS":"418 Center Road","City":"Montville","DISCIPL":"POL","LAT":44.446491,"LON":-69.246191},
+{"Name":"Moose River Town Office ","ADDRESS":"705 Main Street","City":"Moose River","DISCIPL":"POL","LAT":45.757051,"LON":-70.30971},
+{"Name":"Katahdin Lodge ","ADDRESS":"626 Aroostook Scenic Highway","City":"Moro Plt","DISCIPL":"POL","LAT":46.159396,"LON":-68.34868},
+{"Name":"Morrill Community Center ","ADDRESS":"4 North Main Street","City":"Morrill","DISCIPL":"POL","LAT":44.442987,"LON":-69.149237},
+{"Name":"Moscow Town Hall","ADDRESS":"110 Canada Road","City":"Moscow","DISCIPL":"POL","LAT":45.065102,"LON":-69.881549},
+{"Name":"Mount Chase Town Office ","ADDRESS":"1094 Shin Pond Road","City":"Mount Chase","DISCIPL":"POL","LAT":46.080154,"LON":-68.543432},
+{"Name":"Somesville Fire Station ","ADDRESS":"1157 Main Street","City":"Mount Desert","DISCIPL":"POL","LAT":44.360941,"LON":-68.33567},
+{"Name":"Mount Vernon Comunity Center ","ADDRESS":"2 Main Street","City":"Mount Vernon","DISCIPL":"POL","LAT":44.500941,"LON":-69.9867},
+{"Name":"Naples Municipal Office Gymnasium","ADDRESS":"15 Village Green Lane","City":"Naples","DISCIPL":"POL","LAT":43.970716,"LON":-70.610218},
+{"Name":"New Canada Town Office","ADDRESS":"1809 Caribou Road","City":"New Canada","DISCIPL":"POL","LAT":47.189332,"LON":-68.473592},
+{"Name":"New Gloucester Fire Station","ADDRESS":"611 Lewiston Road","City":"New Gloucester","DISCIPL":"POL","LAT":43.965383,"LON":-70.300435},
+{"Name":"New Limerick Town Office ","ADDRESS":"11 Old Station Road","City":"New Limerick","DISCIPL":"POL","LAT":46.1029,"LON":-67.961874},
+{"Name":"New Portland Fire Station, Community Room ","ADDRESS":"911 River Road","City":"New Portland","DISCIPL":"POL","LAT":44.885183,"LON":-70.094123},
+{"Name":"New Sharon Town Office ","ADDRESS":"11 School Lane","City":"New Sharon","DISCIPL":"POL","LAT":44.636173,"LON":-70.012598},
+{"Name":"New Sweden Town Office","ADDRESS":"50 Station Road","City":"New Sweden","DISCIPL":"POL","LAT":46.942697,"LON":-68.127177},
+{"Name":"Smith Memorial Hall","ADDRESS":"1680 New Vineyard Road","City":"New Vineyard","DISCIPL":"POL","LAT":44.80485,"LON":-70.12073},
+{"Name":"Newburgh Town Office (former Elementary School)","ADDRESS":"2220 Western Avenue","City":"Newburgh","DISCIPL":"POL","LAT":44.729192,"LON":-68.97901},
+{"Name":"Community Meeting Room in Fire Station","ADDRESS":"86 River Road","City":"Newcastle","DISCIPL":"POL","LAT":44.031284,"LON":-69.542608},
+{"Name":"Newfield Town Hall ","ADDRESS":"23 South Effingham Road","City":"Newfield","DISCIPL":"POL","LAT":43.643929,"LON":-70.924316},
+{"Name":"Newport Recreation","ADDRESS":"81 North Street","City":"Newport","DISCIPL":"POL","LAT":44.839181,"LON":-69.277694},
+{"Name":"Raymond C. Foster Municipal Building","ADDRESS":"422 Bear River Road","City":"Newry","DISCIPL":"POL","LAT":44.504077,"LON":-70.818685},
+{"Name":"Nobleboro Town Office Meeting Room","ADDRESS":"192 US Highway 1","City":"Nobleboro","DISCIPL":"POL","LAT":44.101455,"LON":-69.450193},
+{"Name":"Mill Stream School ","ADDRESS":"26 Mercer Road","City":"Norridgewock","DISCIPL":"POL","LAT":44.712688,"LON":-69.799019},
+{"Name":"North Berwick Primary School ","ADDRESS":"25 Varney Road","City":"North Berwick","DISCIPL":"POL","LAT":43.307229,"LON":-70.739467},
+{"Name":"North Haven Town Office","ADDRESS":"16 Town Office Square","City":"North Haven","DISCIPL":"POL","LAT":44.118232,"LON":-69.104317},
+{"Name":"LDS Church","ADDRESS":"247 Walnut Hill Road","City":"North Yarmouth","DISCIPL":"POL","LAT":43.817253,"LON":-70.239444},
+{"Name":"Northfield Town Hall ","ADDRESS":"1940 Northfield Road","City":"Northfield","DISCIPL":"POL","LAT":44.828965,"LON":-67.57055},
+{"Name":"Northport Town Office ","ADDRESS":"16 Beech Hill Road","City":"Northport","DISCIPL":"POL","LAT":44.336009,"LON":-68.997844},
+{"Name":"Norway Fire Station ","ADDRESS":"19 Danforth Street","City":"Norway","DISCIPL":"POL","LAT":44.214438,"LON":-70.538361},
+{"Name":"Oakfield Town Office ","ADDRESS":"80 School Street","City":"Oakfield","DISCIPL":"POL","LAT":46.104024,"LON":-68.150671},
+{"Name":"Williams Elementary School ","ADDRESS":"55 Pleasant Street","City":"Oakland","DISCIPL":"POL","LAT":44.549757,"LON":-69.716306},
+{"Name":"Dunaway Community Center ","ADDRESS":"23 School Street","City":"Ogunquit","DISCIPL":"POL","LAT":43.246898,"LON":-70.598645},
+{"Name":"Old Orchard Beach High School ","ADDRESS":"40 E Emerson Cummings Boulevard","City":"Old Orchard Beach","DISCIPL":"POL","LAT":43.517009,"LON":-70.396349},
+{"Name":"Knights Of Columbus Hall ","ADDRESS":"5 Gilman Falls Avenue","City":"Old Town","DISCIPL":"POL","LAT":44.941229,"LON":-68.655846},
+{"Name":"Orient Town Office","ADDRESS":"82 School House Road","City":"Orient","DISCIPL":"POL","LAT":45.814126,"LON":-67.838477},
+{"Name":"Orland Consolidated School ","ADDRESS":"21 School House Road","City":"Orland","DISCIPL":"POL","LAT":44.568499,"LON":-68.736544},
+{"Name":"Birch Street School Senior Center ","ADDRESS":"10 Birch Street","City":"Orono","DISCIPL":"POL","LAT":44.881539,"LON":-68.669601},
+{"Name":"University of Maine ","ADDRESS":"5748 Memorial Union-Multipurpose Room","City":"Orono","DISCIPL":"POL","LAT":44.883113,"LON":-68.671941},
+{"Name":"Orono Municipal Building-Town Council Chambers ","ADDRESS":"59 Main Street","City":"Orono","DISCIPL":"POL","LAT":44.882696,"LON":-68.673146},
+{"Name":"Orrington Town Office","ADDRESS":"29 Center Drive","City":"Orrington","DISCIPL":"POL","LAT":44.73009,"LON":-68.824355},
+{"Name":"Emery L. Jordan Community Building","ADDRESS":"197 Moosehill Road","City":"Osborn","DISCIPL":"POL","LAT":44.778895,"LON":-68.236113},
+{"Name":"Otis Town Office","ADDRESS":"132 Otis Road","City":"Otis","DISCIPL":"POL","LAT":44.734588,"LON":-68.452531},
+{"Name":"Otisfield Town Office ","ADDRESS":"403 State Route 121","City":"Otisfield","DISCIPL":"POL","LAT":44.091417,"LON":-70.534925},
+{"Name":"Owls Head Community Building ","ADDRESS":"224 Ash Point Drive","City":"Owls Head","DISCIPL":"POL","LAT":44.062504,"LON":-69.09203},
+{"Name":"Oxbow Plt Municipal Builidng","ADDRESS":"685 Oxbow Road","City":"Oxbow Plt","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Oxford Public Safety Building ","ADDRESS":"701 Main Street","City":"Oxford","DISCIPL":"POL","LAT":44.145621,"LON":-70.479136},
+{"Name":"Palermo Town Office","ADDRESS":"45 North Palermo Road","City":"Palermo","DISCIPL":"POL","LAT":44.433735,"LON":-69.426538},
+{"Name":"Town Office and Community Center","ADDRESS":"4 Madawaska Road","City":"Palmyra","DISCIPL":"POL","LAT":44.844297,"LON":-69.383738},
+{"Name":"Paris Fire Department ","ADDRESS":"137 Western Avenue","City":"Paris","DISCIPL":"POL","LAT":44.225812,"LON":-70.517903},
+{"Name":"Parkman Town Office -Lower Level","ADDRESS":"771 State Highway 150","City":"Parkman","DISCIPL":"POL","LAT":45.130258,"LON":-69.435977},
+{"Name":"Parsonsfield Town Office","ADDRESS":"634 North Road","City":"Parsonsfield","DISCIPL":"POL","LAT":43.757966,"LON":-70.924498},
+{"Name":"Passadumkeag Town Offfice ","ADDRESS":"34 Pleasant Street","City":"Passadumkeag","DISCIPL":"POL","LAT":45.184907,"LON":-68.611549},
+{"Name":"Patten Fire Station","ADDRESS":"27 Dearborn Street","City":"Patten","DISCIPL":"POL","LAT":45.995432,"LON":-68.451083},
+{"Name":"Pembroke Municipal Building","ADDRESS":"48 Old County Road","City":"Pembroke","DISCIPL":"POL","LAT":44.950738,"LON":-67.168207},
+{"Name":"Penobscot  Community School Gym","ADDRESS":"66 North Penobscot Road","City":"Penobscot","DISCIPL":"POL","LAT":44.505288,"LON":-68.677486},
+{"Name":"Penobscot Nation Community Building-Conference Room","ADDRESS":"12 Wabanaki Way","City":"Penobscot Nation","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Perham Town Office ","ADDRESS":"206 High Meadow Road","City":"Perham","DISCIPL":"POL","LAT":46.877941,"LON":-68.256139},
+{"Name":"Perry Municipal Building","ADDRESS":"898 US Route 1","City":"Perry","DISCIPL":"POL","LAT":45.002811,"LON":-67.090655},
+{"Name":"Peru Town Office ","ADDRESS":"26 Main Street","City":"Peru","DISCIPL":"POL","LAT":44.524908,"LON":-70.465744},
+{"Name":"Phillips Municipal Building (former Primary School) ","ADDRESS":"15 Russell Street","City":"Phillips","DISCIPL":"POL","LAT":44.823242,"LON":-70.343169},
+{"Name":"Phippsburg Town Hall","ADDRESS":"1042 Main Road","City":"Phippsburg","DISCIPL":"POL","LAT":43.809311,"LON":-69.820188},
+{"Name":"Pittsfield Town Office ","ADDRESS":"112 Somerset Avenue","City":"Pittsfield","DISCIPL":"POL","LAT":44.784136,"LON":-69.382168},
+{"Name":"Pittston Town Office","ADDRESS":"38 Whitefield Road","City":"Pittston","DISCIPL":"POL","LAT":44.17021,"LON":-69.626988},
+{"Name":"Tribal Office Building ","ADDRESS":"9 Sakom Road","City":"Pleasant Point","DISCIPL":"POL","LAT":44.964909,"LON":-67.062497},
+{"Name":"Pleasant Ridge Plantation Town Office ","ADDRESS":"343 Rowe Pond Road","City":"Pleasant Ridge Plt","DISCIPL":"POL","LAT":45.116467,"LON":-69.990118},
+{"Name":"Plymouth Grange Hall ","ADDRESS":"1927 Moosehead Trail","City":"Plymouth","DISCIPL":"POL","LAT":44.768972,"LON":-69.209999},
+{"Name":"Poland Town Hall ","ADDRESS":"1223 Maine Street","City":"Poland","DISCIPL":"POL","LAT":44.068182,"LON":-70.403682},
+{"Name":"Portage Lake Municipal Building ","ADDRESS":"20 School Street","City":"Portage Lake","DISCIPL":"POL","LAT":46.759285,"LON":-68.474146},
+{"Name":"Porter Town Hall","ADDRESS":"71 Main Street","City":"Porter","DISCIPL":"POL","LAT":43.811641,"LON":-70.882851},
+{"Name":"East End Elementary School ","ADDRESS":"195 North Street","City":"Portland","DISCIPL":"POL","LAT":43.671615,"LON":-70.25376},
+{"Name":"Merrill Auditorium Rehearsal Hall ","ADDRESS":"20 Myrtle Street","City":"Portland","DISCIPL":"POL","LAT":43.659531,"LON":-70.25707},
+{"Name":"Peaks Island Community Hall ","ADDRESS":"Peaks Island","City":"Peaks Island","DISCIPL":"POL","LAT":43.655992,"LON":-70.195544},
+{"Name":"Reiche Elementary School ","ADDRESS":"166 Brackett Street","City":"Portland","DISCIPL":"POL","LAT":43.650897,"LON":-70.267111},
+{"Name":"Exposition Building ","ADDRESS":"239 Park Avenue","City":"Portland","DISCIPL":"POL","LAT":43.656093,"LON":-70.277118},
+{"Name":"Woodfords Congregational Church ","ADDRESS":"202 Woodford Street","City":"Portland","DISCIPL":"POL","LAT":43.670678,"LON":-70.287263},
+{"Name":"Italian Heritage Center ","ADDRESS":"40 Westland Avenue","City":"Portland","DISCIPL":"POL","LAT":43.656663,"LON":-70.29652},
+{"Name":"St. Pius Church ","ADDRESS":"492 Ocean Avenue","City":"Portland","DISCIPL":"POL","LAT":43.68519,"LON":-70.271758},
+{"Name":"First Baptist Church ","ADDRESS":"360 Canco Road","City":"Portland","DISCIPL":"POL","LAT":43.690076,"LON":-70.278369},
+{"Name":"Stevens Avenue Armory","ADDRESS":"772 Stevens Avenue","City":"Portland","DISCIPL":"POL","LAT":43.685276,"LON":-70.293583},
+{"Name":"Grace Baptist Church ","ADDRESS":"476 Summit Street","City":"Portland","DISCIPL":"POL","LAT":43.718,"LON":-70.295958},
+{"Name":"Mallett Hall ","ADDRESS":"429 Hallowell Road","City":"Pownal","DISCIPL":"POL","LAT":43.893516,"LON":-70.183693},
+{"Name":"William V Haskell Community Center ","ADDRESS":"270 Main Street","City":"Presque Isle","DISCIPL":"POL","LAT":46.676607,"LON":-68.015231},
+{"Name":"Princeton Town Office ","ADDRESS":"15 Depot Street","City":"Princeton","DISCIPL":"POL","LAT":45.224897,"LON":-67.573959},
+{"Name":"Prospect Municipal Office ","ADDRESS":"958 Bangor Road","City":"Prospect","DISCIPL":"POL","LAT":44.555598,"LON":-68.864435},
+{"Name":"Randolph Town Office ","ADDRESS":"121 Kinderhook Street","City":"Randolph","DISCIPL":"POL","LAT":44.23136,"LON":-69.752859},
+{"Name":"Rangeley Town Office ","ADDRESS":"15 School Street","City":"Rangeley","DISCIPL":"POL","LAT":44.969366,"LON":-70.646077},
+{"Name":"Rangeley Plt School House (Town Hall)","ADDRESS":"293 South Shore Drive","City":"Rangeley Plt","DISCIPL":"POL","LAT":44.925255,"LON":-70.688538},
+{"Name":"Jordan Small Middle School ","ADDRESS":"423 Webbs Mills Road","City":"Raymond","DISCIPL":"POL","LAT":43.9375,"LON":-70.445032},
+{"Name":"Readfield Town Hall, 2nd Floor ","ADDRESS":"8 Old Kents Hill Road","City":"Readfield","DISCIPL":"POL","LAT":44.388406,"LON":-69.970445},
+{"Name":"School House (Town Office Building)","ADDRESS":"8 Springer Road","City":"Reed Plt","DISCIPL":"POL","LAT":45.638835,"LON":-68.079707},
+{"Name":"Richmond Jr/Sr High School Gymnasium","ADDRESS":"132 Main Street","City":"Richmond","DISCIPL":"POL","LAT":44.08945,"LON":-69.811153},
+{"Name":"Courser Memorial School","ADDRESS":"47 West Ripley Road","City":"Ripley","DISCIPL":"POL","LAT":45.02219,"LON":-69.46914},
+{"Name":"Robbinston Fire Station ","ADDRESS":"886 US Route 1","City":"Robbinston","DISCIPL":"POL","LAT":45.079334,"LON":-67.109373},
+{"Name":"Rockland Community Building ","ADDRESS":"61 Limerock Street","City":"Rockland","DISCIPL":"POL","LAT":44.104362,"LON":-69.11278},
+{"Name":"Rockport Town Office ","ADDRESS":"101 Main Street","City":"Rockport","DISCIPL":"POL","LAT":44.191643,"LON":-69.078667},
+{"Name":"Rockwood Community Center ","ADDRESS":"3638 Rockwood Road (to Education Lane)","City":"Rockwood Strip Twp","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Rome Town Office/ Community Center ","ADDRESS":"8 Mercer Road","City":"Rome","DISCIPL":"POL","LAT":44.595958,"LON":-69.900225},
+{"Name":"Roque Bluffs Town Hall ","ADDRESS":"3 Roque Bluffs Road","City":"Roque Bluffs","DISCIPL":"POL","LAT":44.613498,"LON":-67.479954},
+{"Name":"Town Hall","ADDRESS":"1095 Roxbury Road","City":"Roxbury","DISCIPL":"POL","LAT":44.614471,"LON":-70.570615},
+{"Name":"American Legion Post 24 ","ADDRESS":"184 Congress Street","City":"Rumford","DISCIPL":"POL","LAT":44.54771,"LON":-70.545475},
+{"Name":"Sabattus Town Office ","ADDRESS":"190 Middle Road","City":"Sabattus","DISCIPL":"POL","LAT":44.114337,"LON":-70.101976},
+{"Name":"Saco Community Center ","ADDRESS":"75 Franklin Street","City":"Saco","DISCIPL":"POL","LAT":43.508638,"LON":-70.452657},
+{"Name":"Saint Agatha Town Office ","ADDRESS":"419 Main Street","City":"St. Agatha","DISCIPL":"POL","LAT":47.243163,"LON":-68.313404},
+{"Name":"Saint Albans Town Hall ","ADDRESS":"7 Water Street","City":"St. Albans","DISCIPL":"POL","LAT":44.910605,"LON":-69.409393},
+{"Name":"Saint Francis Town Office ","ADDRESS":"873 Main Street","City":"St. Francis","DISCIPL":"POL","LAT":47.171147,"LON":-68.889764},
+{"Name":"Tenant's Harbor Fire Station, Meeting Room","ADDRESS":"3 School Street","City":"St. George","DISCIPL":"POL","LAT":43.998664,"LON":-69.121535},
+{"Name":"Saint John Plt Community Center ","ADDRESS":"1774 St. John Road","City":"St. John Plt","DISCIPL":"POL","LAT":47.237594,"LON":-68.698013},
+{"Name":"Sandy River Plt Town Office","ADDRESS":"33 Townhall Road","City":"Sandy River Plt","DISCIPL":"POL","LAT":44.924131,"LON":-70.611451},
+{"Name":"Nasson Community Center","ADDRESS":"457 Main Street","City":"Sanford","DISCIPL":"POL","LAT":43.466349,"LON":-70.797349},
+{"Name":"St Ignatius Hall ","ADDRESS":"25 Riverside Avenue","City":"Sanford","DISCIPL":"POL","LAT":43.44255,"LON":-70.777088},
+{"Name":"Curtis Lake Christian Church ","ADDRESS":"38 Westview Drive","City":"Sanford","DISCIPL":"POL","LAT":43.41397,"LON":-70.753003},
+{"Name":"Sangerville Town Hall Community Room","ADDRESS":"1 Town Hall Avenue","City":"Sangerville","DISCIPL":"POL","LAT":45.120413,"LON":-69.311561},
+{"Name":"Scarborough High School - Plummer's Gymnasium ","ADDRESS":"11 Municipal Drive","City":"Scarborough","DISCIPL":"POL","LAT":43.594099,"LON":-70.337743},
+{"Name":"Searsmont Community Center ","ADDRESS":"37 Main Street South","City":"Searsmont","DISCIPL":"POL","LAT":44.44072,"LON":-69.146819},
+{"Name":"Searsport Public Safety Building ","ADDRESS":"3 Union Street","City":"Searsport","DISCIPL":"POL","LAT":44.460328,"LON":-68.922581},
+{"Name":"Sebago Town Office ","ADDRESS":"406 Bridgton Road","City":"Sebago","DISCIPL":"POL","LAT":43.891763,"LON":-70.697555},
+{"Name":"Harland Ladd Municipal Building ","ADDRESS":"29 North Road","City":"Sebec","DISCIPL":"POL","LAT":45.235472,"LON":-69.140962},
+{"Name":"Kenneth B. Brown Community Building ","ADDRESS":"1144 Seboeis Road","City":"Seboeis Plt","DISCIPL":"POL","LAT":45.314613,"LON":-68.698917},
+{"Name":"Sedgwick Town House ","ADDRESS":"574 North Sedgwick Road","City":"Sedgwick","DISCIPL":"POL","LAT":44.30566,"LON":-68.616324},
+{"Name":"Shapleigh Town Hall ","ADDRESS":"22 Back Road","City":"Shapleigh","DISCIPL":"POL","LAT":43.540128,"LON":-70.847661},
+{"Name":"Sherman Town Office ","ADDRESS":"36 School Street","City":"Sherman","DISCIPL":"POL","LAT":45.870104,"LON":-68.384731},
+{"Name":"Shirley Town Hall","ADDRESS":"25 West Road","City":"Shirley","DISCIPL":"POL","LAT":45.365684,"LON":-69.621905},
+{"Name":"Sidney Town Office ","ADDRESS":"2986 Middle Road","City":"Sidney","DISCIPL":"POL","LAT":44.446405,"LON":-69.739848},
+{"Name":"Skowhegan Municipal Building","ADDRESS":"225 Water Street","City":"Skowhegan","DISCIPL":"POL","LAT":44.766444,"LON":-69.716527},
+{"Name":"Smithfield Municipal Building ","ADDRESS":"926 Village Road","City":"Smithfield","DISCIPL":"POL","LAT":44.637267,"LON":-69.824867},
+{"Name":"Smyrna Town Office ","ADDRESS":"3391 Route 2","City":"Smyrna","DISCIPL":"POL","LAT":46.136111,"LON":-68.0975},
+{"Name":"Solon Town Office ","ADDRESS":"121 South Main Street","City":"Solon","DISCIPL":"POL","LAT":44.944441,"LON":-69.851798},
+{"Name":"Somerville Town Office","ADDRESS":"72 Sand Hill Road","City":"Somerville","DISCIPL":"POL","LAT":44.309899,"LON":-69.457961},
+{"Name":"Sorrento Community Building ","ADDRESS":"81 Pomola Avenue","City":"Sorrento","DISCIPL":"POL","LAT":44.481591,"LON":-68.17206},
+{"Name":"South Berwick Town Hall, 3rd Floor ","ADDRESS":"180 Main Street","City":"South Berwick","DISCIPL":"POL","LAT":43.297242,"LON":-70.718227},
+{"Name":"South Bristol School ","ADDRESS":"2024 State Route 129","City":"South Bristol","DISCIPL":"POL","LAT":43.861622,"LON":-69.558487},
+{"Name":"South Portland Boys & Girls Club ","ADDRESS":"169 Broadway","City":"South Portland","DISCIPL":"POL","LAT":43.64356,"LON":-70.23801},
+{"Name":"American Legion Hall ","ADDRESS":"413 Broadway","City":"South Portland","DISCIPL":"POL","LAT":43.637452,"LON":-70.246462},
+{"Name":"South Portland Community Center ","ADDRESS":"21 Nelson Road","City":"South Portland","DISCIPL":"POL","LAT":43.622402,"LON":-70.270001},
+{"Name":"Redbank Community Center ","ADDRESS":"Macarthur Circle West","City":"South Portland","DISCIPL":"POL","LAT":43.636538,"LON":-70.317288},
+{"Name":"South Thomaston Municipal Building ","ADDRESS":"125 Spruce Head Road","City":"South Thomaston","DISCIPL":"POL","LAT":44.036168,"LON":-69.137925},
+{"Name":"Southport Town Hall ","ADDRESS":"361 Hendricks Hill Road","City":"Southport","DISCIPL":"POL","LAT":43.841287,"LON":-69.655228},
+{"Name":"Southwest Harbor Fire Station ","ADDRESS":"250 Main Street","City":"Southwest Harbor","DISCIPL":"POL","LAT":44.285474,"LON":-68.32818},
+{"Name":"Springfield Town Office ","ADDRESS":"13 Park Street","City":"Springfield","DISCIPL":"POL","LAT":42.099707,"LON":-72.584549},
+{"Name":"Stacyville Town Office","ADDRESS":"414 Station Road","City":"Stacyville","DISCIPL":"POL","LAT":45.887141,"LON":-68.42173},
+{"Name":"Standish Municipal Center ","ADDRESS":"175 Northeast Road","City":"Standish","DISCIPL":"POL","LAT":43.744654,"LON":-70.540561},
+{"Name":"Starks Town Office ","ADDRESS":"57 Anson Road","City":"Starks","DISCIPL":"POL","LAT":44.736573,"LON":-69.926996},
+{"Name":"Stetson Meeting House","ADDRESS":"7 Wolfboro Road","City":"Stetson","DISCIPL":"POL","LAT":44.909888,"LON":-69.118978},
+{"Name":"Steuben Town Office ","ADDRESS":"294 US Route 1","City":"Steuben","DISCIPL":"POL","LAT":44.512973,"LON":-67.967997},
+{"Name":"Stockholm Community Center","ADDRESS":"62 School Street","City":"Stockholm","DISCIPL":"POL","LAT":47.041305,"LON":-68.135077},
+{"Name":"Stockton Springs Town Office ","ADDRESS":"217 Main Street","City":"Stockton Springs","DISCIPL":"POL","LAT":44.57133,"LON":-68.790375},
+{"Name":"Stoneham Fire Station ","ADDRESS":"22 Butters Hill Road","City":"Stoneham","DISCIPL":"POL","LAT":44.252111,"LON":-70.8177},
+{"Name":"Stonington Town Hall, 2nd Floor Meeting Room","ADDRESS":"32 Main Street","City":"Stonington","DISCIPL":"POL","LAT":44.156082,"LON":-68.664581},
+{"Name":"Stow Municipal Office ","ADDRESS":"710 Stow Road","City":"Stow","DISCIPL":"POL","LAT":44.16804,"LON":-70.983949},
+{"Name":"Forster Memorial Building ","ADDRESS":"14 South Main Street","City":"Strong","DISCIPL":"POL","LAT":44.808427,"LON":-70.220215},
+{"Name":"Sullivan Town Office ","ADDRESS":"1888 US Highway 1","City":"Sullivan","DISCIPL":"POL","LAT":44.525823,"LON":-68.215673},
+{"Name":"Bisbee-Dyer Municipal Center (Town Office)","ADDRESS":"633 Main Street","City":"Sumner","DISCIPL":"POL","LAT":44.378317,"LON":-70.423257},
+{"Name":"Surry Town Office ","ADDRESS":"741 North Bend Road","City":"Surry","DISCIPL":"POL","LAT":44.499299,"LON":-68.505664},
+{"Name":"Swans Island Town Office ","ADDRESS":"125 Harbor Road","City":"Swan's Island","DISCIPL":"POL","LAT":44.156206,"LON":-68.449566},
+{"Name":"Swanville Town Office ","ADDRESS":"6 Town House Road","City":"Swanville","DISCIPL":"POL","LAT":44.525739,"LON":-69.051923},
+{"Name":"Sweden Town Office","ADDRESS":"147 Bridgton Road","City":"Sweden","DISCIPL":"POL","LAT":44.073416,"LON":-70.749252},
+{"Name":"Ladies Aid Building ","ADDRESS":"Old Mill Road","City":"Talmadge","DISCIPL":"POL","LAT":45.321461,"LON":-67.704197},
+{"Name":"Temple Town Hall ","ADDRESS":"258 Temple Road","City":"Temple","DISCIPL":"POL","LAT":44.633978,"LON":-70.198057},
+{"Name":"The Forks Town Hall ","ADDRESS":"215 US Route 201","City":"The Forks Plt","DISCIPL":"POL","LAT":44.950384,"LON":-69.860968},
+{"Name":"American Legion Hall ","ADDRESS":"10 Watts Lane","City":"Thomaston","DISCIPL":"POL","LAT":44.08203,"LON":-69.184928},
+{"Name":"Thorndike Town Office ","ADDRESS":"125 Mount View Road","City":"Thorndike","DISCIPL":"POL","LAT":44.574315,"LON":-69.277587},
+{"Name":"Topsfield Municipal Building ","ADDRESS":"48 North Road","City":"Topsfield","DISCIPL":"POL","LAT":45.422355,"LON":-67.736984},
+{"Name":"Topsham Fairgrounds Exhibition Building ","ADDRESS":"54 Elm Street","City":"Topsham","DISCIPL":"POL","LAT":43.92584,"LON":-69.953479},
+{"Name":"Tremont Town Office-Harvey Kelley Meeting Room","ADDRESS":"20 Harbor Drive","City":"Tremont","DISCIPL":"POL","LAT":44.248983,"LON":-68.343527},
+{"Name":"Trenton Town Office ","ADDRESS":"59 Oak Point Road","City":"Trenton","DISCIPL":"POL","LAT":44.418357,"LON":-68.398837},
+{"Name":"Troy Town Office ","ADDRESS":"129 Rogers Road","City":"Troy","DISCIPL":"POL","LAT":44.670881,"LON":-69.262086},
+{"Name":"Turner Town Office ","ADDRESS":"11 Turner Center Road","City":"Turner","DISCIPL":"POL","LAT":44.256305,"LON":-70.258219},
+{"Name":"William Pullen Municipal Building ","ADDRESS":"567 Common Road","City":"Union","DISCIPL":"POL","LAT":44.212401,"LON":-69.264696},
+{"Name":"Unity Town Office (Unity Elementary School)","ADDRESS":"84 School Street","City":"Unity","DISCIPL":"POL","LAT":44.613247,"LON":-69.354108},
+{"Name":"Ladies Aid Building ","ADDRESS":"23 Mill Road","City":"Upton","DISCIPL":"POL","LAT":44.695525,"LON":-71.010406},
+{"Name":"Van Buren Community Center ","ADDRESS":"130 Champlain Street","City":"Van Buren","DISCIPL":"POL","LAT":47.169074,"LON":-67.946873},
+{"Name":"Vanceboro Fire Station ","ADDRESS":"Shaw Street","City":"Vanceboro","DISCIPL":"POL","LAT":45.578713,"LON":-67.443295},
+{"Name":"Vassalboro Town Office ","ADDRESS":"682 Main Street","City":"Vassalboro","DISCIPL":"POL","LAT":44.46924,"LON":-69.617088},
+{"Name":"Veazie Municipal Building, Council Chambers ","ADDRESS":"1084 Main Street","City":"Veazie","DISCIPL":"POL","LAT":44.841214,"LON":-68.70185},
+{"Name":"Verona Town Hall ","ADDRESS":"16 School Street","City":"Verona Island","DISCIPL":"POL","LAT":44.571478,"LON":-68.791671},
+{"Name":"Vienna Community Building ","ADDRESS":"34 Kimball Pond Road","City":"Vienna","DISCIPL":"POL","LAT":44.558866,"LON":-69.988092},
+{"Name":"Vinalhaven Town Office","ADDRESS":"19 Washington School Road","City":"Vinalhaven","DISCIPL":"POL","LAT":44.048666,"LON":-68.837169},
+{"Name":"Wade Town office-Washburn","ADDRESS":"6 Victoria Street","City":"Wade","DISCIPL":"POL","LAT":46.790158,"LON":-68.158221},
+{"Name":"Ladies Aid Building ","ADDRESS":"10 Old Mill Road","City":"Waite","DISCIPL":"POL","LAT":45.325073,"LON":-67.696838},
+{"Name":"Waldo Town Office ","ADDRESS":"629 Waldo Station Road","City":"Waldo","DISCIPL":"POL","LAT":44.491108,"LON":-69.099759},
+{"Name":"Waldoboro Municipal Building","ADDRESS":"1600 Atlantic Highway","City":"Waldoboro","DISCIPL":"POL","LAT":44.103282,"LON":-69.379278},
+{"Name":"Wales Municipal Center","ADDRESS":"175 Centre Road","City":"Wales","DISCIPL":"POL","LAT":44.161232,"LON":-70.062705},
+{"Name":"Wallagrass Town Office","ADDRESS":"1080 Aroostook Road Apt. # 2","City":"Wallagrass","DISCIPL":"POL","LAT":47.148785,"LON":-68.591023},
+{"Name":"Waltham Town Office","ADDRESS":"1520 Waltham Road","City":"Waltham","DISCIPL":"POL","LAT":53.51339,"LON":-0.116101},
+{"Name":"Masonic Hall","ADDRESS":"90 Camden Road","City":"Warren","DISCIPL":"POL","LAT":44.119025,"LON":-69.259169},
+{"Name":"Washburn Civic Center/Town Office ","ADDRESS":"1287 Main Street","City":"Washburn","DISCIPL":"POL","LAT":46.789974,"LON":-68.156297},
+{"Name":"Bryant Room - Gibbs Library","ADDRESS":"40 Old Union Road","City":"Washington","DISCIPL":"POL","LAT":44.26576,"LON":-69.353491},
+{"Name":"Massabesic East School","ADDRESS":"84 West Road","City":"Waterboro","DISCIPL":"POL","LAT":43.53746,"LON":-70.723086},
+{"Name":"Waterford Municipal Building ","ADDRESS":"366 Valley Road","City":"Waterford","DISCIPL":"POL","LAT":44.203553,"LON":-70.732787},
+{"Name":"Bourque-Lanigan Post #5 American Legion ","ADDRESS":"21 College Avenue","City":"Waterville","DISCIPL":"POL","LAT":44.579416,"LON":-69.607525},
+{"Name":"Ladd Recreation Center ","ADDRESS":"26 Gott Road","City":"Wayne","DISCIPL":"POL","LAT":44.339953,"LON":-70.067949},
+{"Name":"Webster Plt Town Office ","ADDRESS":"583 Tucker Ridge Road","City":"Webster Plt","DISCIPL":"POL","LAT":0,"LON":0},
+{"Name":"Multi-Purpose Room ","ADDRESS":"23 Mill Street","City":"Weld","DISCIPL":"POL","LAT":44.697914,"LON":-70.422388},
+{"Name":"Wellington Town Office","ADDRESS":"13 Harmony Road","City":"Wellington","DISCIPL":"POL","LAT":45.037907,"LON":-69.596461},
+{"Name":"Wells High School Gymnasium","ADDRESS":"200 Sanford Road","City":"Wells","DISCIPL":"POL","LAT":43.319625,"LON":-70.589788},
+{"Name":"Wesley Elementary School","ADDRESS":"2 Whining Pines Drive","City":"Wesley","DISCIPL":"POL","LAT":44.952297,"LON":-67.660831},
+{"Name":"West Bath Fire Hall ","ADDRESS":"192 State Road","City":"West Bath","DISCIPL":"POL","LAT":43.903707,"LON":-69.850476},
+{"Name":"West Forks Town Hall ","ADDRESS":"2955 US Route 201","City":"West Forks Plt","DISCIPL":"POL","LAT":44.950384,"LON":-69.860968},
+{"Name":"West Gardiner Town Hall/Fire Department ","ADDRESS":"322 Spears Corner Road","City":"West Gardiner","DISCIPL":"POL","LAT":44.219314,"LON":-69.879539},
+{"Name":"West Paris Town Office-Meeting Room ","ADDRESS":"25 Kingsbury Street","City":"West Paris","DISCIPL":"POL","LAT":44.32452,"LON":-70.572647},
+{"Name":"Wescott Community Building","ADDRESS":"426 Bridge Street","City":"Westbrook","DISCIPL":"POL","LAT":43.689504,"LON":-70.359637},
+{"Name":"Westbrook Armory ","ADDRESS":"120 Stroudwater Street","City":"Westbrook","DISCIPL":"POL","LAT":43.674778,"LON":-70.355893},
+{"Name":"Pride's Corner Congregational Church ","ADDRESS":"235 Pride Street","City":"Westbrook","DISCIPL":"POL","LAT":43.708749,"LON":-70.337723},
+{"Name":"Westfield Town Office ","ADDRESS":"6 Main Street","City":"Westfield","DISCIPL":"POL","LAT":46.567196,"LON":-67.919124},
+{"Name":"Westmanland Town Hall","ADDRESS":"Westmanland Road","City":"Westmanland","DISCIPL":"POL","LAT":46.953396,"LON":-68.189476},
+{"Name":"Weston Town Office ","ADDRESS":"5 Church Lane","City":"Weston","DISCIPL":"POL","LAT":45.731021,"LON":-67.888151},
+{"Name":"Westport Island Old Town Hall ","ADDRESS":"1217 Main Road","City":"Westport Island","DISCIPL":"POL","LAT":43.897651,"LON":-69.708917},
+{"Name":"Whitefield Fire and Rescue","ADDRESS":"26 Townhouse Road","City":"Whitefield","DISCIPL":"POL","LAT":44.221822,"LON":-69.607657},
+{"Name":"Whiting Community Building ","ADDRESS":"169 US Route 1","City":"Whiting","DISCIPL":"POL","LAT":44.768709,"LON":-67.201697},
+{"Name":"Hillgrove Community Building","ADDRESS":"42 South Main Street","City":"Whitneyville","DISCIPL":"POL","LAT":44.714945,"LON":-67.457764},
+{"Name":"Willimantic Town Hall","ADDRESS":"2360 Elliottsville Road","City":"Willimantic","DISCIPL":"POL","LAT":45.307393,"LON":-69.407035},
+{"Name":"Wilton Town Office","ADDRESS":"158 Weld Road","City":"Wilton","DISCIPL":"POL","LAT":44.600686,"LON":-70.238836},
+{"Name":"Windham High School- Main Gymnasium","ADDRESS":"406 Gray Road","City":"Windham","DISCIPL":"POL","LAT":43.787041,"LON":-70.412296},
+{"Name":"Windham High School- Auxiliary Gymnasium ","ADDRESS":"406 Gray Road","City":"Windham","DISCIPL":"POL","LAT":43.787041,"LON":-70.412296},
+{"Name":"Windsor Town Hall ","ADDRESS":"523 Ridge Road","City":"Windsor","DISCIPL":"POL","LAT":44.311475,"LON":-69.580901},
+{"Name":"Winn Community Hall (Town Office) ","ADDRESS":"24 Main Street","City":"Winn","DISCIPL":"POL","LAT":45.486286,"LON":-68.37527},
+{"Name":"V F W ","ADDRESS":"175 Veteran Drive","City":"Winslow","DISCIPL":"POL","LAT":44.524659,"LON":-69.628801},
+{"Name":"Municipal Building","ADDRESS":"20 School Street","City":"Winter Harbor","DISCIPL":"POL","LAT":44.391451,"LON":-68.08721},
+{"Name":"Samuel L Wagner Middle School ","ADDRESS":"19 Williams Way","City":"Winterport","DISCIPL":"POL","LAT":44.637786,"LON":-68.844979},
+{"Name":"Winterville Town Office ","ADDRESS":"391 Quimby Road","City":"Winterville Plt","DISCIPL":"POL","LAT":46.962521,"LON":-68.608641},
+{"Name":"Winthrop Town Office ","ADDRESS":"17 Highland Avenue","City":"Winthrop","DISCIPL":"POL","LAT":44.304008,"LON":-69.966635},
+{"Name":"Wiscasset Community Center","ADDRESS":"242 Gardiner Road","City":"Wiscasset","DISCIPL":"POL","LAT":44.021326,"LON":-69.669444},
+{"Name":"Woodland Public Highway Garage","ADDRESS":"843 Woodland Center Road","City":"Woodland","DISCIPL":"POL","LAT":46.873768,"LON":-68.099151},
+{"Name":"Woodstock Town Office ","ADDRESS":"26 Monk Avenue","City":"Woodstock","DISCIPL":"POL","LAT":44.381056,"LON":-70.641867},
+{"Name":"South Woodville Schoolhouse ","ADDRESS":"Woodville Road","City":"Woodville","DISCIPL":"POL","LAT":45.479415,"LON":-68.484597},
+{"Name":"Woolwich Central School","ADDRESS":"137 Nequasset Road","City":"Woolwich","DISCIPL":"POL","LAT":43.939674,"LON":-69.781799},
+{"Name":"Robert W. Boyd Amvets Post #2 ","ADDRESS":"148 North Road","City":"Yarmouth","DISCIPL":"POL","LAT":43.811157,"LON":-70.178647},
+{"Name":"York High School-Robert E. Butler Gymnasium ","ADDRESS":"1 Robert Stevens Drive","City":"York","DISCIPL":"POL","LAT":43.161748,"LON":-70.648258}];
+
+var keyPairs = [{'POL': 'Polling Station'}];
+
+xx('#svgButtons').append('<h3>Filters</h3>');
+xx.each(keyPairs[0], function(index, value) {
+	thisName = this;
+	xx('#svgButtons').append('<div id="' + index + '"><div class="pinCushion ' + index + '"></div>' + value + '</div>');
+	xx('#' + index).addClass('svgButton');
+	//(thisName == currentData) ? xx('#' + this.name).addClass('buttonOn'): '';
+});
+
+var width = 420;
+var height = 600;
+
+// Basic zoom level; global in order to throw it around wherever we need it.
+newZoom = 1;
+x = width / 2;
+y = height / 2;
+newX = 0;
+newY = 0;
+
+
+var qTapped = function(d) {
+	xx(this).qtip('destroy');
+}
+
+var qTap = function(d) {
+    var thisAddress = (d.ADDRESS) ? d.ADDRESS + ', ' : '';
+    var thisType = keyPairs[0][d.DISCIPL];
+
+    xx(this).qtip({
+		overwrite: true, // Make sure another tooltip can't overwrite this one without it being explicitly destroyed
+		content: {
+        	title: d.Name,
+        	text: '<table class="tipster">'
+    	+ '<tr><td class="tipLeft">Address:</td><td class="tipRight">' + thisAddress + d.City + '</td></tr>'
+    	+ '<tr><td class="tipLeft">Type:</td><td class="tipRight">' + thisType + '</td></tr>'
+     	+ '</table>'
+    	},
+    	style: { 
+    	    classes: 'qtip-bootstrap',
+    	    tip: true
+    	},
+    	position: {
+    		 my: 'bottom center',
+    		 at: 'top center',
+    		 target: 'event'
+    	},
+    	show: {
+    		ready: true // Needed to make it show on first mouseover event
+    	}
+    }).on('scroll', function (e){ xx(this).qtip('hide'); })
+    ;
+}
+
+
+var projection = d3.geo.transverseMercator()
+    .rotate([66 + 8 / 60, -45 - 42 / 60])
+    .scale(7500);
+
+// Set the path for geo.path.
+var path = d3.geo.path()
+    .projection(projection);
+
+// D3 - Actually put the <svg> onto the page. Set to global in order to grab it other places.
+svg = d3.select("#svgMap").append('svg')
+    .attr("width", width)
+    .attr("height", height)
+    .attr("viewBox", "0 0 " + width + " " + height)
+    .attr("preserveAspectRatio", "xMinYMin meet")
+    ;
+
+// Use the inner g for drag transforms & the outer g for zoom. One g only for Chrome.
+mapAll = svg.append('g');
+g = mapAll.append('g');
+var rotato = -1.2;
+
+mapAll.attr('transform', 'rotate(' + rotato + ')');
+
+
+
+d3.json('http://dev.mainetodaymedia.com/devMap/topojson/maine-counties.json', function(error, me) {
+ 	 	
+ 	g.selectAll()
+		.data(topojson.feature(me, me.objects.layer1).features)
+		.enter()
+		.append("path")
+		.attr('d', path)
+		.attr('class', 'counties')
+		;
+		
+	g.append('path')
+    	.datum(topojson.mesh(me, me.objects.layer1, function(a, b) { return a === b; }))
+    	.attr("class", "state")
+    	.attr("d", path)
+    	;
+    	
+	g.selectAll(".pin")
+		.data(dataJSON)
+		.enter().append("circle")
+		.attr("r",0)
+		.attr('class', function(d) { return 'pin ' + d.DISCIPL; })
+		.attr("transform", function(d) { return "translate(" + projection([d.LON,d.LAT]) + ")"; })
+		.on('mouseover', function(d) { qTap(d); })
+		.on('mouseleave', function(d) { qTapped(d); })
+		.on('click', function(d) { 
+			showSpot(d); 
+		})
+		.call(callNow)
+		;
+
+});
+
+xx('.svgButton').live('click', function() {
+	xx(this).toggleClass('buttonOn');
+	d3.selectAll('.' + this.id)
+		.transition().duration(500)
+		.attr('r', function(d) {
+			var moo = d3.select(this).attr('r');
+			thisR = (moo < pinRad) ? pinRad : 0;
+			return thisR;
+		});
+});
+
+function showSpot(d) {
+    var thisAddress = (d.ADDRESS) ? d.ADDRESS + ', ' : '';
+    var thisType = keyPairs[0][d.DISCIPL];
+    var thisURL = (d.WEBURL) ? '<tr><td colspan="2" class="clickRight"><a href="' + d.WEBURL + '" target="_blank">visit site »</a></td></tr>' : '';
+    var displayClick = '<h2>' + d.Name + '</h2>'
+    	+ '<table class="clickster">'
+    	+ '<tr><td class="clickLeft">Address:</td><td class="clickRight">' + thisAddress + d.City + '</td></tr>'
+    	+ '<tr><td class="clickLeft">Type:</td><td class="clickRight">' + thisType + '</td></tr>'
+     	+ thisURL
+     	+ '</table>'
+     	;
+    
+    xx('#svgClick').html(displayClick);
+    
+}
+
+function getSpot(ui) {
+	var mooCow = ui.item.value.split(' – ')[0];
+	var d = findElement(dataJSON, 'Name', mooCow);
+
+    var thisAddress = (d.ADDRESS) ? d.ADDRESS + ', ' : '';
+    var thisType = keyPairs[0][d.DISCIPL];
+    var thisURL = (d.WEBURL) ? '<tr><td colspan="2" class="clickRight"><a href="' + d.WEBURL + '" target="_blank">visit site »</a></td></tr>' : '';
+
+
+    var displayClick = '<h2>' + d.Name + '</h2>'
+    	+ '<table class="clickster">'
+    	+ '<tr><td class="clickLeft">Address:</td><td class="clickRight">' + thisAddress + d.City + '</td></tr>'
+    	+ '<tr><td class="clickLeft">Type:</td><td class="clickRight">' + thisType + '</td></tr>'
+     	+ thisURL
+     	+ '</table>'
+     	;
+    
+    xx('#svgClick').html(displayClick);
+}
+
+xx(function() {
+	var searchJSON = [];
+	xx.each(dataJSON, function() {
+		searchJSON.push(this.Name + ' – ' + this.City);
+	});
+	xx('#tags').click(function() { jQuery(this).val(''); });
+	xx( "#tags" ).autocomplete({ source: searchJSON, select: function(e, ui) { getSpot(ui) } });
+});
+
+
+function findElement(arr, propName, propValue) {
+	var returnVal = 'none';
+	for (var i=0; i < arr.length; i++) {
+		if (arr[i][propName] == propValue) {
+      		returnVal = arr[i];
+    	}
+	} 
+	return returnVal;
+}
+
+
+function callNow() {
+	xx('#' + current ).trigger('click');
+}
+
+var zoom = d3.behavior.zoom()
+    .on("zoom",function() {
+    	xx('.qtip.qtip-bootstrap').qtip('hide');
+    	g.attr("transform","translate("+ d3.event.translate.join(",")+")");
+    	g.selectAll("circle").attr("d", path.projection(projection));
+    	g.selectAll("path").attr("d", path.projection(projection)); 
+    });
+
+svg.call(zoom);
+
+// D3 – Set some buttons up for zooming functions on the SVG
+var zoomButtonIn = d3.select('#d3ZoomPlus').on("click", zoomIn);
+var zoomButtonOut = d3.select('#d3ZoomMinus').on("click", zoomOut);
+
+// Zoom functions, written as raw. Pass to one generic handler, just because I'm lazy about math conditionals.
+function zoomIn() {
+    if (newZoom < 5) {
+        newZoom++;
+        newX = (width * (1-newZoom)) / 2;
+        newY = (height * (1-newZoom)) / 2;
+        doZoom(newX,newY);
+    }
+}
+
+function zoomOut() {
+    if (newZoom > 1) {
+        newZoom--;
+        newX = (width * (1-newZoom)) / 2;
+        newY = (height * (1-newZoom)) / 2;
+        doZoom(newX,newY);
+    }
+}
+
+// Handler for zoom functions.
+function doZoom(newX,newY) {
+        d3.event.preventDefault();
+        mapAll.transition()
+            .duration(1000)
+            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")scale(" + newZoom + ")translate(" + -x + "," + -y + ")rotate(" + rotato + ")");
+}
+
+
+}); // END DOC READY
+
+
+</script>
+
+
+<!-- TO HERE //-->
+
+</div>
+</div>
+
+</body>
+</html>
+
